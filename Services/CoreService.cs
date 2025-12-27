@@ -977,6 +977,38 @@ namespace BIPL_RAASTP2M.Services
         {
             try
             {
+
+                // =============== CUSTOMER HANDLING ===============
+                long customerId = 0;
+
+                if (!string.IsNullOrEmpty(model.CustomerPhone))
+                {
+                    //var existingCustomer = await _db.Customers
+                    //    .FirstOrDefaultAsync(x => x.CustomerPhone == model.CustomerPhone && x.MerchantId == merchantId);
+                    var existingCustomer = await _coreRepository.GetCustomersbyPhoneNumber(merchantId, model.CustomerPhone);
+                    if (existingCustomer == null || existingCustomer.CustomerId == 0)
+                    {
+                        var newCustomer = new Customers
+                        {
+                            MerchantId = merchantId,
+                            CustomerName = model.CustomerName,
+                            CustomerPhone = model.CustomerPhone,
+                            DeliveryAddress = model.DeliveryAddress,
+                            CreatedAt = DateTime.Now
+                        };
+                        //_db.Customers.Add(newCustomer);
+                        //await _db.SaveChangesAsync();
+                        await _coreRepository.AddCustomer(newCustomer);
+
+                        customerId = newCustomer.CustomerId;
+                    }
+                    else
+                    {
+                        customerId = existingCustomer.CustomerId;
+                    }
+                }
+
+
                 // ========================
                 // VALIDATE ITEMS
                 // ========================
@@ -1091,6 +1123,7 @@ namespace BIPL_RAASTP2M.Services
                 {
                     MerchantId = merchantId,
                     UserId = userId,
+                    CustomerId = customerId,
                     OrderType = model.OrderType,
                     TableId = model.TableId,
                     // TotalAmount store final payable (after all discounts)
@@ -1180,6 +1213,45 @@ namespace BIPL_RAASTP2M.Services
                 };
             }
         }
+
+        public async Task<object> SearchCustomersAsync(string query, long merchantId)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(query))
+                {
+                    return new DefaultResponse { ResponseCode = "01", ResponseMessage = "Query is required." };
+                }
+
+                var customers = await _coreRepository.SearchCustomersAsync(merchantId, query);
+
+                if (customers == null || customers.Count == 0)
+                {
+                    return new DefaultResponse { ResponseCode = "01", ResponseMessage = "No customer found." };
+                }
+
+                var customerData = customers.Select(c => new
+                {
+                    c.CustomerId,
+                    c.CustomerName,
+                    c.CustomerPhone,
+                    c.DeliveryAddress
+                });
+
+                return new
+                {
+                    ResponseCode = "00",
+                    ResponseMessage = "Success",
+                    Data = customerData
+                };
+            }
+            catch (Exception ex)
+            {
+                await LogWrite("SearchCustomersAsync", ex.Message, "CoreService.cs", merchantId.ToString());
+                return new DefaultResponse { ResponseCode = "05", ResponseMessage = "Service Failed" };
+            }
+        }
+
 
     }
 }

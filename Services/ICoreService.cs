@@ -27,5 +27,6 @@ namespace BIPL_RAASTP2M.Services
         Task<DefaultResponse> DeleteProductService(int productId, long merchantId);
         Task<object> AddOrderAsync(AddOrderRequest model, long merchantId, int userId);
         Task<object> GetOrderHistoryAsync(OrderHistoryRequest model, long merchantId);
+        Task<object> SearchCustomersAsync(string query, long merchantId);
     }
 }

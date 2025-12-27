@@ -29,5 +29,8 @@ namespace BIPL_RAASTP2M.Repositories
         Task<long> AddOrderAsync(Orders order);
         Task<bool> AddOrderItemsAsync(List<OrderItems> items);
         Task<List<OrderHistoryResponse>> GetOrderHistoryAsync(long merchantId, DateTime fromDate, DateTime toDate);
+        Task<Customers> GetCustomersbyPhoneNumber(long merchantId, string CustomerPhone);
+        Task<bool> AddCustomer(Customers customers);
+        Task<List<Customers>> SearchCustomersAsync(long merchantId, string query);
     }
 }

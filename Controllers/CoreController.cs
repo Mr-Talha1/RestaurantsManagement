@@ -621,6 +621,44 @@ namespace BIPL_RAASTP2M.Controllers
                 });
             }
         }
+
+        [HttpGet("SearchCustomer")]
+        [Authorize]
+        public async Task<IActionResult> SearchCustomer(string query)
+        {
+            var UserID = "";
+
+            try
+            {
+                // Token Validate
+                var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+                var tokenData = await _jwtFactory.ValidateJwtToken(token);
+                if (tokenData == null || tokenData.MerchantId <= 0)
+                {
+                    return Ok(new DefaultResponse
+                    {
+                        ResponseCode = "04",
+                        ResponseMessage = "user is unauthorized",
+                    });
+                }
+
+                UserID = tokenData.UserID;
+
+            var result = await _coreService.SearchCustomersAsync(query, tokenData.MerchantId);
+
+            return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                await _coreService.LogWrite("Error-SearchCustomer", ex.Message, "CoreController:SearchCustomer", UserID ?? "System");
+                return Ok(new DefaultResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "Something Went Wrong",
+                });
+            }
+        }
+
     }
 
 }

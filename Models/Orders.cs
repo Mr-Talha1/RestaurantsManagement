@@ -21,5 +21,6 @@ namespace BIPL_RAASTP2M.Models
         public string? OrderDiscountType { get; set; }
         public decimal? OrderDiscountValue { get; set; }
         public decimal? OrderDiscountAmount { get; set; }
+        public long? CustomerId { get; set; }
     }
 }

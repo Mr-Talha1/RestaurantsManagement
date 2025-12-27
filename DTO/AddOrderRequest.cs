@@ -9,6 +9,11 @@
         public decimal? OrderDiscountValue { get; set; }
         public int? TableId { get; set; }           // Only for Dining
         public long OrderNumber { get; set; }
+
+        //Customer details
+        public string? CustomerName { get; set; }
+        public string CustomerPhone { get; set; }
+        public string? DeliveryAddress { get; set; }
         public List<OrderItemRequest> Items { get; set; }
 
     }

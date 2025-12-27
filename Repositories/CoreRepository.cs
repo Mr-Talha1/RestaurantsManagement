@@ -400,5 +400,46 @@ namespace BIPL_RAASTP2M.Repositories
             return result;
         }
 
+        public async Task<Customers> GetCustomersbyPhoneNumber(long merchantId, string CustomerPhone)
+        {
+            try
+            {
+                return await _appDbContext.Customers
+                    .FirstOrDefaultAsync(x => x.MerchantId == merchantId && x.CustomerPhone == CustomerPhone) ?? new Customers();
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetCustomersbyPhoneNumber", ex.Message, "CoreRepository:GetCustomersbyPhoneNumber", merchantId.ToString() ?? "System");
+
+                return new Customers();
+            }
+        }
+        public async Task<bool> AddCustomer(Customers customers)
+        {
+            try
+            {
+                _appDbContext.Customers.Add(customers);
+                return await _appDbContext.SaveChangesAsync() > 0;
+
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-AddCustomer", ex.Message, "CoreRepository:AddCustomer", "System");
+
+                return false;
+            }
+        }
+
+        public async Task<List<Customers>> SearchCustomersAsync(long merchantId, string query)
+        {
+            return await _appDbContext.Customers
+                .Where(x => x.MerchantId == merchantId &&
+                       (x.CustomerName.Contains(query) ||
+                        x.CustomerPhone.Contains(query)))
+                .OrderBy(x => x.CustomerName)
+                .Take(20) // suggestions limit
+                .ToListAsync();
+        }
+
     }
 }
