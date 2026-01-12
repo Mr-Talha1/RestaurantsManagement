@@ -11,6 +11,8 @@
         public int ItemsCount { get; set; }
         public string? TableName { get; set; }
         public List<OrderItemResponse> Items { get; set; }
+        public CustomerResponse Customer { get; set; } // nullable
+
     }
     public class OrderItemResponse
     {

@@ -350,18 +350,12 @@ namespace BIPL_RAASTP2M.Repositories
             _appDbContext.OrderItems.AddRange(items);
             return await _appDbContext.SaveChangesAsync() > 0;
         }
-        public async Task<List<OrderHistoryResponse>> GetOrderHistoryAsync(
-    long merchantId, DateTime fromDate, DateTime toDate)
+        public async Task<List<OrderHistoryResponse>> GetOrderHistoryAsyncbk(long merchantId, DateTime fromDate, DateTime toDate)
         {
             var query = _appDbContext.Orders
                 .Where(x => x.MerchantId == merchantId &&
                             x.OrderDate >= fromDate &&
                             x.OrderDate <= toDate);
-
-            //if (orderType != "All")
-            //{
-            //    query = query.Where(x => x.OrderType == orderType);
-            //}
 
             var orders = await query
                 .OrderByDescending(x => x.Id)
@@ -393,6 +387,76 @@ namespace BIPL_RAASTP2M.Repositories
                     GrossTotal=o.GrossTotal,
                     ItemsCount = o.ItemsCount,
                     TableName = o.TableId.ToString(),
+                    Items = items
+                });
+            }
+
+            return result;
+        }
+        public async Task<List<OrderHistoryResponse>> GetOrderHistoryAsync(
+    long merchantId, DateTime fromDate, DateTime toDate)
+        {
+            var orders = await _appDbContext.Orders
+                .Where(x => x.MerchantId == merchantId &&
+                            x.OrderDate >= fromDate &&
+                            x.OrderDate <= toDate)
+                .OrderByDescending(x => x.Id)
+                .ToListAsync();
+
+            var result = new List<OrderHistoryResponse>();
+
+            foreach (var o in orders)
+            {
+                // ---------- Order Items ----------
+                var items = await (from i in _appDbContext.OrderItems
+                                   join p in _appDbContext.Products on i.ProductId equals p.Id
+                                   where i.OrderId == o.Id
+                                   select new OrderItemResponse
+                                   {
+                                       ProductName = p.ProductName,
+                                       Qty = i.Qty,
+                                       UnitPrice = i.UnitPrice,
+                                       GrossTotal = i.GrossTotal,
+                                       TotalPrice = i.TotalPrice
+                                   }).ToListAsync();
+
+                // ---------- Customer (ONLY if exists) ----------
+                CustomerResponse customer = null;
+
+                if (o.CustomerId.HasValue && o.CustomerId > 0)
+                {
+                    customer = await _appDbContext.Customers
+                        .Where(c => c.CustomerId == o.CustomerId.Value)
+                        .Select(c => new CustomerResponse
+                        {
+                            CustomerId = c.CustomerId,
+                            CustomerName = c.CustomerName,
+                            CustomerPhone = c.CustomerPhone,
+                            DeliveryAddress = c.DeliveryAddress
+                        })
+                        .FirstOrDefaultAsync();
+                }
+                // ---------- Dining Table Name ----------
+                string tableName = null;
+                if (o.TableId.HasValue && o.TableId > 0)
+                {
+                    tableName = await _appDbContext.DiningTables
+                        .Where(t => t.Id == o.TableId.Value)
+                        .Select(t => t.Name)
+                        .FirstOrDefaultAsync();
+                }
+                // ---------- Final Response ----------
+                result.Add(new OrderHistoryResponse
+                {
+                    Id = o.Id,
+                    OrderNumber = o.OrderNumber,
+                    OrderType = o.OrderType,
+                    OrderDate = o.OrderDate,
+                    TotalAmount = o.TotalAmount,
+                    GrossTotal = o.GrossTotal,
+                    ItemsCount = o.ItemsCount,
+                    TableName = tableName,
+                    Customer = customer,   // 👈 customer only when exists
                     Items = items
                 });
             }

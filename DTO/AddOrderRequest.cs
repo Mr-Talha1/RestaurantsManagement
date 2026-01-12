@@ -12,7 +12,7 @@
 
         //Customer details
         public string? CustomerName { get; set; }
-        public string CustomerPhone { get; set; }
+        public string? CustomerPhone { get; set; }
         public string? DeliveryAddress { get; set; }
         public List<OrderItemRequest> Items { get; set; }
 

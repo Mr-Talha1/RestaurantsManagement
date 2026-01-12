@@ -1199,7 +1199,8 @@ namespace BIPL_RAASTP2M.Services
                 {
                     ResponseCode = "00",
                     ResponseMessage = "Success",
-                    Data = list
+                    Data = list,
+                    OrderCount=list.Count
                 };
             }
             catch (Exception ex)
