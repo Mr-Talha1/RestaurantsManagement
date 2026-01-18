@@ -456,6 +456,10 @@ namespace BIPL_RAASTP2M.Repositories
                     GrossTotal = o.GrossTotal,
                     ItemsCount = o.ItemsCount,
                     TableName = tableName,
+                    UserId = o.UserId,
+                    IsRefunded = o.IsRefunded,
+                    RefundedBy = o.RefundedBy,
+                    RefundedAt = o.RefundedAt,
                     Customer = customer,   // 👈 customer only when exists
                     Items = items
                 });

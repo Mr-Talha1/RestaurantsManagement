@@ -10,6 +10,10 @@
         public decimal TotalAmount { get; set; }
         public int ItemsCount { get; set; }
         public string? TableName { get; set; }
+        public string? UserId { get; set; }
+        public bool IsRefunded { get; set; }
+        public string? RefundedBy { get; set; }
+        public DateTime? RefundedAt { get; set; }
         public List<OrderItemResponse> Items { get; set; }
         public CustomerResponse Customer { get; set; } // nullable
 

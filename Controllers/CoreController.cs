@@ -572,7 +572,7 @@ namespace BIPL_RAASTP2M.Controllers
                 //long merchantId = GetMerchantIdFromToken();
             //int userId = GetUserIdFromToken();
 
-            var response = await _coreService.AddOrderAsync(model, tokenData.MerchantId, 1);
+            var response = await _coreService.AddOrderAsync(model, tokenData.MerchantId, UserID);
             return Ok(response);
             }
             catch (Exception ex)
@@ -659,9 +659,9 @@ namespace BIPL_RAASTP2M.Controllers
             }
         }
 
-        [HttpPost("RefundOrder")]
+        [HttpGet("RefundOrder")]
         [Authorize]
-        public async Task<IActionResult> RefundOrder([FromBody] long Id)
+        public async Task<IActionResult> RefundOrder(long OrderId)
         {
                 var UserID = "";
 
@@ -681,7 +681,7 @@ namespace BIPL_RAASTP2M.Controllers
 
                     UserID = tokenData.UserID;
 
-                    var response = await _coreService.RefundOrderAsync(Id, tokenData.MerchantId,tokenData.UserID
+                    var response = await _coreService.RefundOrderAsync(OrderId, tokenData.MerchantId,tokenData.UserID
                 );
 
                 return Ok(response);

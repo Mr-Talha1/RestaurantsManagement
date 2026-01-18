@@ -7,7 +7,7 @@ namespace BIPL_RAASTP2M.Models
         [Key]
         public long Id { get; set; }
         public long MerchantId { get; set; }
-        public int? UserId { get; set; }
+        public string? UserId { get; set; }
         public long OrderNumber { get; set; }
         public string OrderType { get; set; }
         public int? TableId { get; set; }

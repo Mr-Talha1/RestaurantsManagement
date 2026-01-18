@@ -748,232 +748,232 @@ namespace BIPL_RAASTP2M.Services
             }
         }
 
-        public async Task<object> AddOrderAsyncbk(AddOrderRequest model, long merchantId, int userId)
-        {
-            try
-            {
-                // ========================
-                // VALIDATE ITEMS
-                // ========================
-                if (model.Items == null || model.Items.Count == 0)
-                {
-                    return new DefaultResponse
-                    {
-                        ResponseCode = "01",
-                        ResponseMessage = "No items found in order."
-                    };
-                }
+        //public async Task<object> AddOrderAsyncbk(AddOrderRequest model, long merchantId, int userId)
+        //{
+        //    try
+        //    {
+        //        // ========================
+        //        // VALIDATE ITEMS
+        //        // ========================
+        //        if (model.Items == null || model.Items.Count == 0)
+        //        {
+        //            return new DefaultResponse
+        //            {
+        //                ResponseCode = "01",
+        //                ResponseMessage = "No items found in order."
+        //            };
+        //        }
 
-                decimal totalAmount = 0;
-                int itemCount = 0;
+        //        decimal totalAmount = 0;
+        //        int itemCount = 0;
 
-                var orderItems = new List<OrderItems>();
+        //        var orderItems = new List<OrderItems>();
 
-                // ========================
-                // VALIDATE EACH PRODUCT
-                // ========================
-                foreach (var item in model.Items)
-                {
-                    var product = await _coreRepository.GetProductById(item.ProductId, merchantId);
+        //        // ========================
+        //        // VALIDATE EACH PRODUCT
+        //        // ========================
+        //        foreach (var item in model.Items)
+        //        {
+        //            var product = await _coreRepository.GetProductById(item.ProductId, merchantId);
 
-                    if (product == null || product.Id == 0)
-                    {
-                        return new DefaultResponse
-                        {
-                            ResponseCode = "01",
-                            ResponseMessage = $"Product not found: ID {item.ProductId}"
-                        };
-                    }
+        //            if (product == null || product.Id == 0)
+        //            {
+        //                return new DefaultResponse
+        //                {
+        //                    ResponseCode = "01",
+        //                    ResponseMessage = $"Product not found: ID {item.ProductId}"
+        //                };
+        //            }
 
-                    decimal unitPrice = product.ProductPrice;
-                    decimal total = unitPrice * item.Qty;
+        //            decimal unitPrice = product.ProductPrice;
+        //            decimal total = unitPrice * item.Qty;
 
-                    totalAmount += total;
-                    itemCount += item.Qty;
+        //            totalAmount += total;
+        //            itemCount += item.Qty;
 
-                    orderItems.Add(new OrderItems
-                    {
-                        ProductId = item.ProductId,
-                        Qty = item.Qty,
-                        UnitPrice = unitPrice,
-                        TotalPrice = total,
-                        CreatedAt = DateTime.Now
-                    });
-                }
+        //            orderItems.Add(new OrderItems
+        //            {
+        //                ProductId = item.ProductId,
+        //                Qty = item.Qty,
+        //                UnitPrice = unitPrice,
+        //                TotalPrice = total,
+        //                CreatedAt = DateTime.Now
+        //            });
+        //        }
 
-                // ========================
-                // INSERT ORDER
-                // ========================
-                var newOrder = new Orders
-                {
-                    MerchantId = merchantId,
-                    UserId = userId,
-                    OrderType = model.OrderType,
-                    TableId = model.TableId,
-                    TotalAmount = totalAmount,
-                    ItemsCount = itemCount,
-                    OrderNumber = model.OrderNumber, 
-                    PaymentType=model.PaymentType,
-                    OrderDate=model.OrderDate,
-                    CreatedAt = DateTime.Now
-                };
+        //        // ========================
+        //        // INSERT ORDER
+        //        // ========================
+        //        var newOrder = new Orders
+        //        {
+        //            MerchantId = merchantId,
+        //            UserId = userId,
+        //            OrderType = model.OrderType,
+        //            TableId = model.TableId,
+        //            TotalAmount = totalAmount,
+        //            ItemsCount = itemCount,
+        //            OrderNumber = model.OrderNumber, 
+        //            PaymentType=model.PaymentType,
+        //            OrderDate=model.OrderDate,
+        //            CreatedAt = DateTime.Now
+        //        };
 
-                long orderId = await _coreRepository.AddOrderAsync(newOrder);
+        //        long orderId = await _coreRepository.AddOrderAsync(newOrder);
 
-                // ========================
-                // SAVE ORDER ITEMS
-                // ========================
-                orderItems.ForEach(x => x.OrderId = orderId);
+        //        // ========================
+        //        // SAVE ORDER ITEMS
+        //        // ========================
+        //        orderItems.ForEach(x => x.OrderId = orderId);
 
-                await _coreRepository.AddOrderItemsAsync(orderItems);
+        //        await _coreRepository.AddOrderItemsAsync(orderItems);
 
-                return new
-                {
-                    ResponseCode = "00",
-                    ResponseMessage = "Order Created Successfully."
-                };
-            }
-            catch (Exception ex)
-            {
-                await LogWrite("AddOrderAsync", ex.Message, "CoreService.cs", merchantId.ToString());
+        //        return new
+        //        {
+        //            ResponseCode = "00",
+        //            ResponseMessage = "Order Created Successfully."
+        //        };
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await LogWrite("AddOrderAsync", ex.Message, "CoreService.cs", merchantId.ToString());
 
-                return new DefaultResponse
-                {
-                    ResponseCode = "05",
-                    ResponseMessage = "Service Failed"
-                };
-            }
-        }
-        public async Task<object> AddOrderAsyncbk1(AddOrderRequest model, long merchantId, int userId)
-        {
-            try
-            {
-                // ========================
-                // VALIDATE ITEMS
-                // ========================
-                if (model.Items == null || model.Items.Count == 0)
-                {
-                    return new DefaultResponse
-                    {
-                        ResponseCode = "01",
-                        ResponseMessage = "No items found in order."
-                    };
-                }
+        //        return new DefaultResponse
+        //        {
+        //            ResponseCode = "05",
+        //            ResponseMessage = "Service Failed"
+        //        };
+        //    }
+        //}
+        //public async Task<object> AddOrderAsyncbk1(AddOrderRequest model, long merchantId, int userId)
+        //{
+        //    try
+        //    {
+        //        // ========================
+        //        // VALIDATE ITEMS
+        //        // ========================
+        //        if (model.Items == null || model.Items.Count == 0)
+        //        {
+        //            return new DefaultResponse
+        //            {
+        //                ResponseCode = "01",
+        //                ResponseMessage = "No items found in order."
+        //            };
+        //        }
 
-                decimal totalAmount = 0;
-                decimal _grossTotal = 0;
-                decimal _discountAmount = 0;
-                int itemCount = 0;
+        //        decimal totalAmount = 0;
+        //        decimal _grossTotal = 0;
+        //        decimal _discountAmount = 0;
+        //        int itemCount = 0;
 
-                var orderItems = new List<OrderItems>();
+        //        var orderItems = new List<OrderItems>();
 
-                // ========================
-                // VALIDATE EACH PRODUCT
-                // ========================
-                foreach (var item in model.Items)
-                {
-                    var product = await _coreRepository.GetProductById(item.ProductId, merchantId);
+        //        // ========================
+        //        // VALIDATE EACH PRODUCT
+        //        // ========================
+        //        foreach (var item in model.Items)
+        //        {
+        //            var product = await _coreRepository.GetProductById(item.ProductId, merchantId);
 
-                    if (product == null)
-                    {
-                        return new DefaultResponse
-                        {
-                            ResponseCode = "01",
-                            ResponseMessage = $"Product not found: ID {item.ProductId}"
-                        };
-                    }
+        //            if (product == null)
+        //            {
+        //                return new DefaultResponse
+        //                {
+        //                    ResponseCode = "01",
+        //                    ResponseMessage = $"Product not found: ID {item.ProductId}"
+        //                };
+        //            }
 
-                    decimal unitPrice = product.ProductPrice;
-                    decimal grossTotal = unitPrice * item.Qty;
-                    decimal discountAmount = 0;
+        //            decimal unitPrice = product.ProductPrice;
+        //            decimal grossTotal = unitPrice * item.Qty;
+        //            decimal discountAmount = 0;
 
-                    // ========== APPLY DISCOUNT ==========
-                    if (!string.IsNullOrEmpty(item.DiscountType) && item.DiscountValue.HasValue)
-                    {
-                        if (item.DiscountType.ToLower() == "percentage")
-                        {
-                            discountAmount = (grossTotal * item.DiscountValue.Value) / 100;
+        //            // ========== APPLY DISCOUNT ==========
+        //            if (!string.IsNullOrEmpty(item.DiscountType) && item.DiscountValue.HasValue)
+        //            {
+        //                if (item.DiscountType.ToLower() == "percentage")
+        //                {
+        //                    discountAmount = (grossTotal * item.DiscountValue.Value) / 100;
 
-                        }
-                        else if (item.DiscountType.ToLower() == "flat")
-                        {
-                            discountAmount = item.DiscountValue.Value;
+        //                }
+        //                else if (item.DiscountType.ToLower() == "flat")
+        //                {
+        //                    discountAmount = item.DiscountValue.Value;
 
-                        }
-                    }
+        //                }
+        //            }
 
-                    // TOTAL PRICE AFTER DISCOUNT
-                    decimal netTotal = grossTotal - discountAmount;
+        //            // TOTAL PRICE AFTER DISCOUNT
+        //            decimal netTotal = grossTotal - discountAmount;
 
-                    totalAmount += netTotal;
-                    itemCount += item.Qty;
-                    _grossTotal += grossTotal;
-                    _discountAmount += discountAmount;
+        //            totalAmount += netTotal;
+        //            itemCount += item.Qty;
+        //            _grossTotal += grossTotal;
+        //            _discountAmount += discountAmount;
 
-                    orderItems.Add(new OrderItems
-                    {
-                        ProductId = item.ProductId,
-                        Qty = item.Qty,
-                        UnitPrice = unitPrice,
-                        DiscountType = item.DiscountType,
-                        DiscountValue = item.DiscountValue,
-                        DiscountAmount = discountAmount,
-                        GrossTotal=grossTotal,
-                        AmountAfterDiscount= netTotal,
-                        TotalPrice = netTotal,
-                        CreatedAt = DateTime.Now
-                    });
-                }
+        //            orderItems.Add(new OrderItems
+        //            {
+        //                ProductId = item.ProductId,
+        //                Qty = item.Qty,
+        //                UnitPrice = unitPrice,
+        //                DiscountType = item.DiscountType,
+        //                DiscountValue = item.DiscountValue,
+        //                DiscountAmount = discountAmount,
+        //                GrossTotal=grossTotal,
+        //                AmountAfterDiscount= netTotal,
+        //                TotalPrice = netTotal,
+        //                CreatedAt = DateTime.Now
+        //            });
+        //        }
 
 
-                // ========================
-                // INSERT ORDER
-                // ========================
-                decimal? overallDiscount = orderItems.Sum(x => x.DiscountAmount);
+        //        // ========================
+        //        // INSERT ORDER
+        //        // ========================
+        //        decimal? overallDiscount = orderItems.Sum(x => x.DiscountAmount);
 
-                var newOrder = new Orders
-                {
-                    MerchantId = merchantId,
-                    UserId = userId,
-                    OrderType = model.OrderType,
-                    TableId = model.TableId,
-                    TotalAmount = totalAmount,
-                    GrossTotal = _grossTotal,
-                    TotalDiscount = _discountAmount,
-                    ItemsCount = itemCount,
-                    OrderNumber = model.OrderNumber,
-                    PaymentType = model.PaymentType,
-                    OrderDate = model.OrderDate,
-                    CreatedAt = DateTime.Now
-                };
+        //        var newOrder = new Orders
+        //        {
+        //            MerchantId = merchantId,
+        //            UserId = userId,
+        //            OrderType = model.OrderType,
+        //            TableId = model.TableId,
+        //            TotalAmount = totalAmount,
+        //            GrossTotal = _grossTotal,
+        //            TotalDiscount = _discountAmount,
+        //            ItemsCount = itemCount,
+        //            OrderNumber = model.OrderNumber,
+        //            PaymentType = model.PaymentType,
+        //            OrderDate = model.OrderDate,
+        //            CreatedAt = DateTime.Now
+        //        };
 
-                long orderId = await _coreRepository.AddOrderAsync(newOrder);
+        //        long orderId = await _coreRepository.AddOrderAsync(newOrder);
 
-                // ========================
-                // SAVE ORDER ITEMS
-                // ========================
-                orderItems.ForEach(x => x.OrderId = orderId);
+        //        // ========================
+        //        // SAVE ORDER ITEMS
+        //        // ========================
+        //        orderItems.ForEach(x => x.OrderId = orderId);
 
-                await _coreRepository.AddOrderItemsAsync(orderItems);
+        //        await _coreRepository.AddOrderItemsAsync(orderItems);
 
-                return new
-                {
-                    ResponseCode = "00",
-                    ResponseMessage = "Order Created Successfully."
-                };
-            }
-            catch (Exception ex)
-            {
-                await LogWrite("AddOrderAsync", ex.Message, "CoreService.cs", merchantId.ToString());
+        //        return new
+        //        {
+        //            ResponseCode = "00",
+        //            ResponseMessage = "Order Created Successfully."
+        //        };
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await LogWrite("AddOrderAsync", ex.Message, "CoreService.cs", merchantId.ToString());
 
-                return new DefaultResponse
-                {
-                    ResponseCode = "05",
-                    ResponseMessage = "Service Failed"
-                };
-            }
-        }
-        public async Task<object> AddOrderAsync(AddOrderRequest model, long merchantId, int userId)
+        //        return new DefaultResponse
+        //        {
+        //            ResponseCode = "05",
+        //            ResponseMessage = "Service Failed"
+        //        };
+        //    }
+        //}
+        public async Task<object> AddOrderAsync(AddOrderRequest model, long merchantId, string userId)
         {
             try
             {
