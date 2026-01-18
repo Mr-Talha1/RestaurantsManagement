@@ -504,6 +504,30 @@ namespace BIPL_RAASTP2M.Repositories
                 .Take(20) // suggestions limit
                 .ToListAsync();
         }
+        public async Task<Orders> GetOrderByIdAsync(long orderId, long merchantId)
+        {
+            try { 
+            return await _appDbContext.Orders.FirstOrDefaultAsync(x => x.Id == orderId && x.MerchantId == merchantId) ?? new Orders();
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetOrderByIdAsync", ex.Message, "CoreRepository:GetOrderByIdAsync", merchantId.ToString() ?? "System");
 
+                throw new Exception("Error while checking GetOrderById: " + ex.Message);
+            }
+        }
+        public async Task<bool> UpdateOrderAsync(Orders order)
+        {
+            try { 
+            _appDbContext.Orders.Update(order);
+            return (await _appDbContext.SaveChangesAsync()) > 0;
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-UpdateOrderAsync", ex.Message, "CoreRepository:UpdateOrderAsync", "System");
+
+                return false;
+            }
+        }
     }
 }

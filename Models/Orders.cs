@@ -22,5 +22,8 @@ namespace BIPL_RAASTP2M.Models
         public decimal? OrderDiscountValue { get; set; }
         public decimal? OrderDiscountAmount { get; set; }
         public long? CustomerId { get; set; }
+        public bool IsRefunded { get; set; }
+        public string? RefundedBy { get; set; }
+        public DateTime? RefundedAt { get; set; }
     }
 }

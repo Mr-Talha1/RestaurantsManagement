@@ -1157,7 +1157,7 @@ namespace BIPL_RAASTP2M.Services
             }
             catch (Exception ex)
             {
-                await LogWrite("AddOrderAsync", ex.Message, "CoreService.cs", merchantId.ToString());
+                await LogWrite("Error-AddOrderAsync", ex.Message, "CoreService.cs", merchantId.ToString());
 
                 return new DefaultResponse
                 {
@@ -1205,7 +1205,7 @@ namespace BIPL_RAASTP2M.Services
             }
             catch (Exception ex)
             {
-                await LogWrite("GetOrderHistoryAsync", ex.Message, "CoreService.cs", merchantId.ToString());
+                await LogWrite("Error-GetOrderHistoryAsync", ex.Message, "CoreService.cs", merchantId.ToString());
 
                 return new DefaultResponse
                 {
@@ -1248,11 +1248,66 @@ namespace BIPL_RAASTP2M.Services
             }
             catch (Exception ex)
             {
-                await LogWrite("SearchCustomersAsync", ex.Message, "CoreService.cs", merchantId.ToString());
+                await LogWrite("Error-SearchCustomersAsync", ex.Message, "CoreService.cs", merchantId.ToString());
                 return new DefaultResponse { ResponseCode = "05", ResponseMessage = "Service Failed" };
             }
         }
 
+        public async Task<DefaultResponse> RefundOrderAsync(long OrderId,long merchantId,string userId)
+        {
+            try
+            {
+                var order = await _coreRepository.GetOrderByIdAsync(OrderId, merchantId);
+
+                if (order.Id == 0 || order == null)
+                {
+                    return new DefaultResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "Order not found"
+                    };
+                }
+
+                if (order.IsRefunded)
+                {
+                    return new DefaultResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "Order already refunded"
+                    };
+                }
+                order.IsRefunded = true;
+                order.RefundedAt = DateTime.UtcNow;
+                order.RefundedBy = userId;
+
+                bool updated = await _coreRepository.UpdateOrderAsync(order);
+
+                if (!updated)
+                {
+                    return new DefaultResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "Refund failed"
+                    };
+                }
+
+                return new DefaultResponse
+                {
+                    ResponseCode = "00",
+                    ResponseMessage = "Order refunded successfully"
+                };
+            }
+            catch(Exception ex)
+            {
+                await LogWrite("Error-RefundOrderAsync", ex.Message, "CoreService.cs:RefundOrderAsync", merchantId.ToString());
+
+                return new DefaultResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "Service failed"
+                };
+            }
+        }
 
     }
 }

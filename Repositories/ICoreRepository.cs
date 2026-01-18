@@ -32,5 +32,7 @@ namespace BIPL_RAASTP2M.Repositories
         Task<Customers> GetCustomersbyPhoneNumber(long merchantId, string CustomerPhone);
         Task<bool> AddCustomer(Customers customers);
         Task<List<Customers>> SearchCustomersAsync(long merchantId, string query);
+        Task<Orders> GetOrderByIdAsync(long orderId, long merchantId);
+        Task<bool> UpdateOrderAsync(Orders order);
     }
 }

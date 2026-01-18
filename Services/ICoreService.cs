@@ -3,6 +3,7 @@ using BIPL_RAASTP2M.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace BIPL_RAASTP2M.Services
 {
@@ -28,5 +29,6 @@ namespace BIPL_RAASTP2M.Services
         Task<object> AddOrderAsync(AddOrderRequest model, long merchantId, int userId);
         Task<object> GetOrderHistoryAsync(OrderHistoryRequest model, long merchantId);
         Task<object> SearchCustomersAsync(string query, long merchantId);
+        Task<DefaultResponse> RefundOrderAsync(long OrderId, long merchantId, string userId);
     }
 }
