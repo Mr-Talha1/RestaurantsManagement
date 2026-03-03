@@ -413,11 +413,16 @@ namespace BIPL_RAASTP2M.Repositories
                                    where i.OrderId == o.Id
                                    select new OrderItemResponse
                                    {
+                                       ProductId= p.Id,
                                        ProductName = p.ProductName,
                                        Qty = i.Qty,
                                        UnitPrice = i.UnitPrice,
                                        GrossTotal = i.GrossTotal,
-                                       TotalPrice = i.TotalPrice
+                                       TotalPrice = i.TotalPrice,
+
+                                       // ADD THESE TWO LINES
+                                       DiscountType = i.DiscountType,
+                                       DiscountValue = i.DiscountValue
                                    }).ToListAsync();
 
                 // ---------- Customer (ONLY if exists) ----------
@@ -460,6 +465,17 @@ namespace BIPL_RAASTP2M.Repositories
                     IsRefunded = o.IsRefunded,
                     RefundedBy = o.RefundedBy,
                     RefundedAt = o.RefundedAt,
+
+                    PaymentType = o.PaymentType,
+
+                    // Order level discounts (already there)
+                    OrderDiscountType = o.OrderDiscountType,
+                    OrderDiscountValue = o.OrderDiscountValue,
+
+                    TaxType = o.TaxType,
+                    TaxValue = o.TaxValue,
+                    TaxAmount = o.TaxAmount,
+
                     Customer = customer,   // 👈 customer only when exists
                     Items = items
                 });
