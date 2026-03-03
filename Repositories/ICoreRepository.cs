@@ -34,5 +34,12 @@ namespace BIPL_RAASTP2M.Repositories
         Task<List<Customers>> SearchCustomersAsync(long merchantId, string query);
         Task<Orders> GetOrderByIdAsync(long orderId, long merchantId);
         Task<bool> UpdateOrderAsync(Orders order);
+        Task<KpiDto> GetKpiDataAsync(long merchantId, DateTime fromDate, DateTime toDate);
+        Task<List<ProductStatDto>> GetProductStatsAsync(long merchantId, DateTime fromDate, DateTime toDate);
+        Task<TimeDataDto> GetTimeDataAsync(long merchantId, DateTime fromDate, DateTime toDate);
+        Task<TaxSummaryDto> GetTaxSummaryAsync(long merchantId, DateTime fromDate, DateTime toDate);
+        Task<DiscountSummaryDto> GetDiscountSummaryAsync(long merchantId, DateTime fromDate, DateTime toDate);
+        Task<List<PaymentMethodDto>> GetPaymentMethodStatsAsync(long merchantId, DateTime fromDate, DateTime toDate);
+        Task<OrderStatsDto> GetOrderStatsAsync(long merchantId, DateTime fromDate, DateTime toDate);
     }
 }

@@ -533,5 +533,459 @@ namespace BIPL_RAASTP2M.Repositories
                 return false;
             }
         }
+
+
+        // reports/summary start =====
+
+        public async Task<KpiDto> GetKpiDataAsync(long merchantId, DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date.AddDays(1).AddTicks(-1);
+
+                var orders = await _appDbContext.Orders
+                    .Where(o => o.MerchantId == merchantId &&
+                               o.OrderDate >= startDate &&
+                               o.OrderDate <= endDate &&
+                               !o.IsRefunded)
+                    .ToListAsync();
+
+                if (!orders.Any())
+                {
+                    return new KpiDto
+                    {
+                        TotalOrders = 0,
+                        TotalItemsSold = 0,
+                        TotalRevenue = 0,
+                        TotalOriginalRevenue = 0,
+                        TotalDiscount = 0
+                    };
+                }
+
+                var orderIds = orders.Select(o => o.Id).ToList();
+
+                var totalItems = await _appDbContext.OrderItems
+                    .Where(oi => orderIds.Contains(oi.OrderId))
+                    .SumAsync(oi => oi.Qty);
+
+                var totalRevenue = orders.Sum(o => o.TotalAmount);
+                var totalOriginalRevenue = orders.Sum(o => o.GrossTotal ?? 0);
+
+                // Calculate total discounts
+                var itemDiscounts = await _appDbContext.OrderItems
+                    .Where(oi => orderIds.Contains(oi.OrderId))
+                    .SumAsync(oi => oi.DiscountAmount ?? 0);
+                var orderDiscounts = orders.Sum(o => o.TotalDiscount ?? 0);
+                var totalDiscount = itemDiscounts + orderDiscounts;
+
+                return new KpiDto
+                {
+                    TotalOrders = orders.Count,
+                    TotalItemsSold = totalItems,
+                    TotalRevenue = totalRevenue,
+                    TotalOriginalRevenue = totalOriginalRevenue,
+                    TotalDiscount = totalDiscount
+                };
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetKpiData", ex.Message, "CoreRepository:GetKpiDataAsync", merchantId.ToString());
+                return new KpiDto { TotalOrders = 0, TotalItemsSold = 0, TotalRevenue = 0, TotalOriginalRevenue = 0, TotalDiscount = 0 };
+            }
+        }
+        public async Task<List<ProductStatDto>> GetProductStatsAsync(long merchantId, DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date.AddDays(1).AddTicks(-1);
+
+                // First, get all order items with their products
+                var query = from o in _appDbContext.Orders
+                            join oi in _appDbContext.OrderItems on o.Id equals oi.OrderId
+                            join p in _appDbContext.Products on oi.ProductId equals p.Id
+                            where o.MerchantId == merchantId &&
+                                  o.OrderDate >= startDate &&
+                                  o.OrderDate <= endDate &&
+                                  !o.IsRefunded &&
+                                  !p.IsDeleted
+                            select new { o, oi, p };
+
+                var results = await query.ToListAsync();
+
+                // Group by product manually to calculate stats
+                var productGroups = results
+                    .GroupBy(x => new { x.p.Id, x.p.ProductName, x.p.ProductPrice })
+                    .Select(g => new ProductStatDto
+                    {
+                        ProductId = g.Key.Id,
+                        ProductName = g.Key.ProductName,
+                        Quantity = g.Sum(x => x.oi.Qty),
+                        Revenue = g.Sum(x => x.oi.TotalPrice),
+                        OriginalRevenue = g.Sum(x => x.oi.GrossTotal ?? 0),
+                        AveragePrice = g.Key.ProductPrice,
+
+                        // Calculate discount amount properly
+                        DiscountAmount = g.Sum(x =>
+                            (x.oi.DiscountAmount ?? 0) + // Item-level discounts
+                            (GetProportionalOrderDiscount(x.o, x.oi) ?? 0) // Order-level discounts
+                        ),
+
+                        // Count items that had any discount
+                        ItemsDiscounted = g.Count(x =>
+                            x.oi.DiscountAmount > 0 ||
+                            (x.o.TotalDiscount > 0 && x.oi.GrossTotal > 0)
+                        )
+                    })
+                    .OrderByDescending(x => x.Quantity)
+                    .ToList();
+
+                return productGroups;
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetProductStats", ex.Message, "CoreRepository:GetProductStatsAsync", merchantId.ToString());
+                return new List<ProductStatDto>();
+            }
+        }
+
+        // Helper method to calculate proportional order discount for an item
+        private decimal? GetProportionalOrderDiscount(Orders order, OrderItems item)
+        {
+            if (order.TotalDiscount > 0 && order.GrossTotal > 0 && item.GrossTotal > 0)
+            {
+                var itemGross = item.GrossTotal ?? 0;
+                var itemShare = itemGross / order.GrossTotal.Value;
+                return Math.Round(order.TotalDiscount.Value * itemShare, 2);
+            }
+            return 0;
+        }
+
+        public async Task<TimeDataDto> GetTimeDataAsync(long merchantId, DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date.AddDays(1).AddTicks(-1); // End of the selected day (11:59:59.999)
+
+                var totalDays = (toDate.Date - fromDate.Date).Days + 1;
+                var isSingleDay = totalDays == 1;
+
+                if (isSingleDay)
+                {
+                    // Hourly data for single day
+                    var orders = await _appDbContext.Orders
+                        .Where(o => o.MerchantId == merchantId &&
+                                   o.OrderDate >= startDate &&
+                                   o.OrderDate <= endDate &&
+                                   !o.IsRefunded)
+                        .ToListAsync();
+
+                    var hourlyData = new List<TimePointDto>();
+
+                    for (int hour = 0; hour < 24; hour++)
+                    {
+                        var hourStart = startDate.AddHours(hour);
+                        var hourEnd = hourStart.AddHours(1);
+
+                        var hourRevenue = orders
+                            .Where(o => o.OrderDate >= hourStart && o.OrderDate < hourEnd)
+                            .Sum(o => o.TotalAmount);
+
+                        hourlyData.Add(new TimePointDto
+                        {
+                            Label = $"{hour}:00",
+                            Hour = hour,
+                            Value = hourRevenue
+                        });
+                    }
+
+                    return new TimeDataDto
+                    {
+                        Type = "hourly",
+                        Points = hourlyData
+                    };
+                }
+                else
+                {
+                    // Daily data for multiple days
+                    var dailyData = new List<TimePointDto>();
+
+                    for (int day = 0; day < totalDays; day++)
+                    {
+                        var currentDate = startDate.AddDays(day);
+                        var nextDate = currentDate.AddDays(1);
+
+                        var dayRevenue = await _appDbContext.Orders
+                            .Where(o => o.MerchantId == merchantId &&
+                                       o.OrderDate >= currentDate &&
+                                       o.OrderDate < nextDate &&
+                                       !o.IsRefunded)
+                            .SumAsync(o => o.TotalAmount);
+
+                        dailyData.Add(new TimePointDto
+                        {
+                            Label = currentDate.ToString("yyyy-MM-dd"),
+                            Date = currentDate,
+                            Value = dayRevenue
+                        });
+                    }
+
+                    return new TimeDataDto
+                    {
+                        Type = "daily",
+                        Points = dailyData
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetTimeData", ex.Message, "CoreRepository:GetTimeDataAsync", merchantId.ToString());
+                return new TimeDataDto { Type = "daily", Points = new List<TimePointDto>() };
+            }
+        }
+
+        // ==================== NEW REPORT METHODS FOR UPDATED UI ====================
+
+        public async Task<TaxSummaryDto> GetTaxSummaryAsync(long merchantId, DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date.AddDays(1).AddTicks(-1);
+
+                var orders = await _appDbContext.Orders
+                    .Where(o => o.MerchantId == merchantId &&
+                               o.OrderDate >= startDate &&
+                               o.OrderDate <= endDate &&
+                               !o.IsRefunded)
+                    .ToListAsync();
+
+                var totalTax = orders.Sum(o => o.TaxAmount ?? 0); // Handle null with ?? 0
+
+                var taxByPaymentMethod = orders
+                    .Where(o => o.TaxAmount.HasValue && o.TaxAmount > 0)
+                    .GroupBy(o => o.PaymentType)
+                    .Select(g => new TaxByPaymentMethodDto
+                    {
+                        PaymentMethod = g.Key,
+                        TaxAmount = g.Sum(o => o.TaxAmount ?? 0)
+                    })
+                    .ToList();
+
+                return new TaxSummaryDto
+                {
+                    TotalTaxCollected = totalTax,
+                    TaxByPaymentMethod = taxByPaymentMethod
+                };
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetTaxSummary", ex.Message, "CoreRepository:GetTaxSummaryAsync", merchantId.ToString());
+                return new TaxSummaryDto { TotalTaxCollected = 0, TaxByPaymentMethod = new List<TaxByPaymentMethodDto>() };
+            }
+        }
+
+        public async Task<DiscountSummaryDto> GetDiscountSummaryAsync(long merchantId, DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date.AddDays(1).AddTicks(-1);
+
+                var orders = await _appDbContext.Orders
+                    .Where(o => o.MerchantId == merchantId &&
+                               o.OrderDate >= startDate &&
+                               o.OrderDate <= endDate &&
+                               !o.IsRefunded)
+                    .ToListAsync();
+
+                var orderIds = orders.Select(o => o.Id).ToList();
+
+                var orderItems = await _appDbContext.OrderItems
+                    .Where(oi => orderIds.Contains(oi.OrderId))
+                    .ToListAsync();
+
+                var products = await _appDbContext.Products
+                    .Where(p => p.MerchantId == merchantId && !p.IsDeleted)
+                    .ToDictionaryAsync(p => p.Id);
+
+                // Dictionary to accumulate discounts per product
+                var productDiscountDict = new Dictionary<int, ProductDiscountDto>();
+
+                // 1. Handle item-level discounts
+                foreach (var item in orderItems.Where(oi => oi.DiscountAmount > 0))
+                {
+                    var productId = item.ProductId;
+
+                    if (!productDiscountDict.ContainsKey(productId))
+                    {
+                        productDiscountDict[productId] = new ProductDiscountDto
+                        {
+                            ProductId = productId,
+                            ProductName = products.ContainsKey(productId) ? products[productId].ProductName : $"Product {productId}",
+                            DiscountAmount = 0,
+                            ItemsDiscounted = 0,
+                            AverageDiscountRate = 0
+                        };
+                    }
+
+                    productDiscountDict[productId].DiscountAmount += item.DiscountAmount ?? 0;
+                    productDiscountDict[productId].ItemsDiscounted += item.Qty; // FIXED: Add quantity here
+                }
+
+                // 2. Handle order-level discounts (proportionally distribute to items)
+                foreach (var order in orders.Where(o => o.TotalDiscount > 0))
+                {
+                    var items = orderItems.Where(oi => oi.OrderId == order.Id).ToList();
+                    var orderGrossTotal = order.GrossTotal ?? 1; // Avoid division by zero
+
+                    foreach (var item in items)
+                    {
+                        if (item.GrossTotal > 0)
+                        {
+                            var itemShare = item.GrossTotal.Value / orderGrossTotal;
+                            var itemOrderDiscount = Math.Round(order.TotalDiscount.Value * itemShare, 2);
+
+                            if (!productDiscountDict.ContainsKey(item.ProductId))
+                            {
+                                productDiscountDict[item.ProductId] = new ProductDiscountDto
+                                {
+                                    ProductId = item.ProductId,
+                                    ProductName = products.ContainsKey(item.ProductId) ? products[item.ProductId].ProductName : $"Product {item.ProductId}",
+                                    DiscountAmount = 0,
+                                    ItemsDiscounted = 0,
+                                    AverageDiscountRate = 0
+                                };
+                            }
+
+                            productDiscountDict[item.ProductId].DiscountAmount += itemOrderDiscount;
+                            // Only count items for order discounts if they didn't already have item-level discounts
+                            var existingItem = orderItems.FirstOrDefault(oi => oi.Id == item.Id);
+                            if (existingItem == null || existingItem.DiscountAmount == 0)
+                            {
+                                productDiscountDict[item.ProductId].ItemsDiscounted += item.Qty;
+                            }
+                        }
+                    }
+                }
+
+                // Calculate average discount rates
+                foreach (var product in productDiscountDict.Values)
+                {
+                    var productItems = orderItems.Where(oi => oi.ProductId == product.ProductId && oi.DiscountValue > 0);
+                    if (productItems.Any())
+                    {
+                        product.AverageDiscountRate = Math.Round(productItems.Average(oi => oi.DiscountValue ?? 0), 2);
+                    }
+                }
+
+                var totalItemDiscounts = orderItems.Sum(oi => oi.DiscountAmount ?? 0);
+                var totalOrderDiscounts = orders.Sum(o => o.TotalDiscount ?? 0);
+                var totalDiscount = totalItemDiscounts + totalOrderDiscounts;
+
+                return new DiscountSummaryDto
+                {
+                    TotalDiscount = totalDiscount,
+                    ProductDiscounts = productDiscountDict.Values.ToList()
+                };
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetDiscountSummary", ex.Message, "CoreRepository:GetDiscountSummaryAsync", merchantId.ToString());
+                return new DiscountSummaryDto { TotalDiscount = 0, ProductDiscounts = new List<ProductDiscountDto>() };
+            }
+        }
+
+
+        public async Task<List<PaymentMethodDto>> GetPaymentMethodStatsAsync(long merchantId, DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date.AddDays(1).AddTicks(-1);
+
+                var orders = await _appDbContext.Orders
+                    .Where(o => o.MerchantId == merchantId &&
+                               o.OrderDate >= startDate &&
+                               o.OrderDate <= endDate &&
+                               !o.IsRefunded)
+                    .ToListAsync();
+
+                var totalAmount = orders.Sum(o => o.TotalAmount);
+
+                var stats = orders
+                    .GroupBy(o => o.PaymentType)
+                    .Select(g => new PaymentMethodDto
+                    {
+                        Method = g.Key,
+                        OrderCount = g.Count(),
+                        TotalAmount = g.Sum(o => o.TotalAmount),
+                        Percentage = totalAmount > 0 ? (g.Sum(o => o.TotalAmount) / totalAmount) * 100 : 0
+                    })
+                    .ToList();
+
+                return stats;
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetPaymentMethodStats", ex.Message, "CoreRepository:GetPaymentMethodStatsAsync", merchantId.ToString());
+                return new List<PaymentMethodDto>();
+            }
+        }
+
+        public async Task<OrderStatsDto> GetOrderStatsAsync(long merchantId, DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date.AddDays(1).AddTicks(-1);
+
+                var orders = await _appDbContext.Orders
+                    .Where(o => o.MerchantId == merchantId &&
+                               o.OrderDate >= startDate &&
+                               o.OrderDate <= endDate)
+                    .ToListAsync();
+
+                var activeOrders = orders.Where(o => !o.IsRefunded).ToList();
+                var refundedOrders = orders.Where(o => o.IsRefunded).ToList();
+
+                var totalOrders = activeOrders.Count;
+                var totalRevenue = activeOrders.Sum(o => o.TotalAmount);
+                var avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+                // Find best selling time
+                string bestSellingTime = "-";
+                if (activeOrders.Any())
+                {
+                    var timeGroups = activeOrders
+                        .GroupBy(o => o.OrderDate?.Hour ?? 0)
+                        .Select(g => new { Hour = g.Key, Count = g.Count() })
+                        .OrderByDescending(g => g.Count)
+                        .FirstOrDefault();
+
+                    if (timeGroups != null)
+                    {
+                        bestSellingTime = $"{timeGroups.Hour}:00";
+                    }
+                }
+
+                return new OrderStatsDto
+                {
+                    TotalOrders = totalOrders,
+                    AverageOrderValue = avgOrderValue,
+                    RefundedOrders = refundedOrders.Count,
+                    RefundedAmount = refundedOrders.Sum(o => o.TotalAmount),
+                    BestSellingTime = bestSellingTime
+                };
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetOrderStats", ex.Message, "CoreRepository:GetOrderStatsAsync", merchantId.ToString());
+                return new OrderStatsDto();
+            }
+        }
+        // reports/summary end 
     }
 }

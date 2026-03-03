@@ -1308,6 +1308,76 @@ namespace BIPL_RAASTP2M.Services
                 };
             }
         }
+        public async Task<ReportResponseDto> GetReportAsync(ReportRequestDto request, long merchantId)
+        {
+            try
+            {
+                // Parse dates
+                if (!DateTime.TryParse(request.FromDate, out var fromDate) ||
+                    !DateTime.TryParse(request.ToDate, out var toDate))
+                {
+                    return new ReportResponseDto
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "Invalid date format. Use yyyy-MM-dd"
+                    };
+                }
+
+                // Validate date range
+                if (fromDate > toDate)
+                {
+                    return new ReportResponseDto
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "From date cannot be after to date"
+                    };
+                }
+
+                // Get all report data
+                var kpi = await _coreRepository.GetKpiDataAsync(merchantId, fromDate, toDate);
+                var productStats = await _coreRepository.GetProductStatsAsync(merchantId, fromDate, toDate);
+                var timeData = await _coreRepository.GetTimeDataAsync(merchantId, fromDate, toDate);
+
+                // NEW DATA
+                var taxSummary = await _coreRepository.GetTaxSummaryAsync(merchantId, fromDate, toDate);
+                var discountSummary = await _coreRepository.GetDiscountSummaryAsync(merchantId, fromDate, toDate);
+                var paymentMethodStats = await _coreRepository.GetPaymentMethodStatsAsync(merchantId, fromDate, toDate);
+                var orderStats = await _coreRepository.GetOrderStatsAsync(merchantId, fromDate, toDate);
+
+                // Log the report generation
+                await _coreRepository.LogWriteAsync(
+                    "ReportGenerated",
+                    $"Report generated for {fromDate:yyyy-MM-dd} to {toDate:yyyy-MM-dd}",
+                    "CoreService.GetReportAsync",
+                    merchantId.ToString());
+
+                return new ReportResponseDto
+                {
+                    ResponseCode = "00",
+                    ResponseMessage = "Report generated successfully",
+                    Data = new ReportDataDto
+                    {
+                        Kpi = kpi,
+                        ProductStats = productStats,
+                        TimeData = timeData,
+                        TaxSummary = taxSummary,
+                        DiscountSummary = discountSummary,
+                        PaymentMethodStats = paymentMethodStats,
+                        OrderStats = orderStats
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                await LogWrite("Error-GetReport", ex.Message, "CoreService.GetReportAsync", merchantId.ToString());
+
+                return new ReportResponseDto
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "Something went wrong while generating report"
+                };
+            }
+        }
 
     }
 }

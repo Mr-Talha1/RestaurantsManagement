@@ -25,5 +25,9 @@ namespace BIPL_RAASTP2M.Models
         public bool IsRefunded { get; set; }
         public string? RefundedBy { get; set; }
         public DateTime? RefundedAt { get; set; }
+        //---------- tax
+        public string? TaxType { get; set; }         // "percentage" or "flat" - now optional
+        public decimal? TaxValue { get; set; }        // 15 or 5 - now optional
+        public decimal? TaxAmount { get; set; }
     }
 }

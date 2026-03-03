@@ -696,7 +696,42 @@ namespace BIPL_RAASTP2M.Controllers
                 });
             }
         }
+        [HttpPost("reports/summary")]
+        [Authorize]
+        public async Task<IActionResult> GetReportSummary([FromBody] ReportRequestDto request)
+        {
+            var UserID = "";
+            try
+            {
+                // Validate token
+                var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+                var tokenData = await _jwtFactory.ValidateJwtToken(token);
 
+                if (tokenData == null || tokenData.MerchantId <= 0)
+                {
+                    return Ok(new ReportResponseDto
+                    {
+                        ResponseCode = "04",
+                        ResponseMessage = "User is unauthorized"
+                    });
+                }
+
+                UserID = tokenData.UserID;
+
+                // Get report
+                var result = await _coreService.GetReportAsync(request, tokenData.MerchantId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                await _coreService.LogWrite("Error-ReportSummary", ex.Message, "CoreController:GetReportSummary", UserID ?? "System");
+                return Ok(new ReportResponseDto
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "Something went wrong"
+                });
+            }
+        }
     }
 
 }
