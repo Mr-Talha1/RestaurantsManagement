@@ -29,5 +29,14 @@ namespace BIPL_RAASTP2M.Models
         public string? TaxType { get; set; }         // "percentage" or "flat" - now optional
         public decimal? TaxValue { get; set; }        // 15 or 5 - now optional
         public decimal? TaxAmount { get; set; }
+
+        // EDIT TRACKING FIELDS
+        public bool IsEdited { get; set; } = false;
+        public string? EditedBy { get; set; }
+        public DateTime? EditedAt { get; set; }
+        public int EditCount { get; set; } = 0;
+
+        // ADD THIS NAVIGATION PROPERTY (Fixes error CS1061)
+        public ICollection<OrderItems> OrderItems { get; set; }
     }
 }

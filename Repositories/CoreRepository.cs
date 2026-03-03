@@ -987,5 +987,47 @@ namespace BIPL_RAASTP2M.Repositories
             }
         }
         // reports/summary end 
+
+        public async Task<Orders> GetOrderForEditAsync(long orderId, long merchantId)
+        {
+            try
+            {
+                return await _appDbContext.Orders
+                    .Include(o => o.OrderItems) // Include items for edit
+                    .FirstOrDefaultAsync(x => x.Id == orderId && x.MerchantId == merchantId)
+                    ?? new Orders();
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetOrderForEdit", ex.Message, "CoreRepository:GetOrderForEditAsync", merchantId.ToString());
+                return new Orders();
+            }
+        }
+        public async Task<bool> UpdateOrderWithItemsAsync(Orders order, List<OrderItems> items)
+        {
+            using var transaction = await _appDbContext.Database.BeginTransactionAsync();
+            try
+            {
+                // Remove old items
+                var oldItems = _appDbContext.OrderItems.Where(x => x.OrderId == order.Id);
+                _appDbContext.OrderItems.RemoveRange(oldItems);
+
+                // Add new items
+                await _appDbContext.OrderItems.AddRangeAsync(items);
+
+                // Update order
+                _appDbContext.Orders.Update(order);
+
+                await _appDbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                await LogWriteAsync("Error-UpdateOrderWithItems", ex.Message, "CoreRepository:UpdateOrderWithItemsAsync", order.MerchantId.ToString());
+                return false;
+            }
+        }
     }
 }

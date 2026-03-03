@@ -1379,6 +1379,268 @@ namespace BIPL_RAASTP2M.Services
             }
         }
 
+        public async Task<EditOrderResponse> EditOrderAsync(EditOrderRequest request, long merchantId, string userId)
+        {
+            try
+            {
+                // 1. Get existing order
+                var existingOrder = await _coreRepository.GetOrderForEditAsync(request.OrderId, merchantId);
+
+                if (existingOrder == null || existingOrder.Id == 0)
+                {
+                    return new EditOrderResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "Order not found"
+                    };
+                }
+
+                // 2. Check if order is refunded
+                if (existingOrder.IsRefunded)
+                {
+                    return new EditOrderResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "Cannot edit refunded order"
+                    };
+                }
+
+                // 3. Store old values for logging
+                var oldValues = JsonConvert.SerializeObject(new
+                {
+                    existingOrder.CustomerId,
+                    existingOrder.PaymentType,
+                    existingOrder.TotalAmount,
+                    existingOrder.ItemsCount,
+                    existingOrder.TaxType,
+                    existingOrder.TaxValue,
+                    existingOrder.TaxAmount
+                });
+
+                // 4. Handle customer
+                long customerId = existingOrder.CustomerId ?? 0;
+                if (!string.IsNullOrEmpty(request.CustomerPhone))
+                {
+                    var existingCustomer = await _coreRepository.GetCustomersbyPhoneNumber(merchantId, request.CustomerPhone);
+                    if (existingCustomer == null || existingCustomer.CustomerId == 0)
+                    {
+                        var newCustomer = new Customers
+                        {
+                            MerchantId = merchantId,
+                            CustomerName = request.CustomerName,
+                            CustomerPhone = request.CustomerPhone,
+                            DeliveryAddress = request.DeliveryAddress,
+                            CreatedAt = DateTime.Now
+                        };
+                        await _coreRepository.AddCustomer(newCustomer);
+                        customerId = newCustomer.CustomerId;
+                    }
+                    else
+                    {
+                        customerId = existingCustomer.CustomerId;
+                    }
+                }
+
+                // 5. Recalculate everything (same as AddOrder logic)
+                decimal subTotal = 0m;
+                decimal grossTotalAll = 0m;
+                decimal totalItemDiscounts = 0m;
+                int itemCount = 0;
+                var orderItems = new List<OrderItems>();
+
+                foreach (var item in request.Items)
+                {
+                    var product = await _coreRepository.GetProductById(item.ProductId, merchantId);
+                    if (product == null)
+                    {
+                        return new EditOrderResponse
+                        {
+                            ResponseCode = "01",
+                            ResponseMessage = $"Product not found: ID {item.ProductId}"
+                        };
+                    }
+
+                    decimal unitPrice = product.ProductPrice;
+                    decimal itemGross = unitPrice * item.Qty;
+                    decimal itemDiscountAmount = 0m;
+
+                    if (!string.IsNullOrEmpty(item.DiscountType) && item.DiscountValue.HasValue)
+                    {
+                        if (item.DiscountType.Equals("percentage", StringComparison.OrdinalIgnoreCase))
+                        {
+                            itemDiscountAmount = Math.Round((itemGross * item.DiscountValue.Value) / 100m, 2);
+                        }
+                        else if (item.DiscountType.Equals("flat", StringComparison.OrdinalIgnoreCase))
+                        {
+                            itemDiscountAmount = Math.Round(item.DiscountValue.Value, 2);
+                        }
+                    }
+
+                    decimal itemNet = Math.Round(itemGross - itemDiscountAmount, 2);
+
+                    grossTotalAll += itemGross;
+                    totalItemDiscounts += itemDiscountAmount;
+                    subTotal += itemNet;
+                    itemCount += item.Qty;
+
+                    orderItems.Add(new OrderItems
+                    {
+                        OrderId = request.OrderId,
+                        ProductId = item.ProductId,
+                        Qty = item.Qty,
+                        UnitPrice = unitPrice,
+                        DiscountType = item.DiscountType,
+                        DiscountValue = item.DiscountValue,
+                        DiscountAmount = itemDiscountAmount,
+                        GrossTotal = itemGross,
+                        AmountAfterDiscount = itemNet,
+                        TotalPrice = itemNet,
+                        CreatedAt = DateTime.Now
+                    });
+                }
+
+                // Apply order discount
+                decimal orderDiscountAmount = 0m;
+                if (!string.IsNullOrEmpty(request.OrderDiscountType) && request.OrderDiscountValue.HasValue)
+                {
+                    if (request.OrderDiscountType.Equals("percentage", StringComparison.OrdinalIgnoreCase))
+                    {
+                        orderDiscountAmount = Math.Round((subTotal * request.OrderDiscountValue.Value) / 100m, 2);
+                    }
+                    else if (request.OrderDiscountType.Equals("flat", StringComparison.OrdinalIgnoreCase))
+                    {
+                        orderDiscountAmount = Math.Round(request.OrderDiscountValue.Value, 2);
+                    }
+                    if (orderDiscountAmount > subTotal) orderDiscountAmount = subTotal;
+                }
+
+                decimal amountAfterDiscount = Math.Round(subTotal - orderDiscountAmount, 2);
+                decimal totalDiscountAll = Math.Round(totalItemDiscounts + orderDiscountAmount, 2);
+
+                // ========================
+                // CALCULATE TAX - NOW USING REQUEST TAX FIELDS
+                // ========================
+                decimal taxAmount = 0m;
+
+                // Case 1: Tax fields provided in request
+                if (!string.IsNullOrEmpty(request.TaxType) && request.TaxValue.HasValue && request.TaxValue > 0)
+                {
+                    if (request.TaxType.Equals("percentage", StringComparison.OrdinalIgnoreCase))
+                    {
+                        taxAmount = Math.Round((amountAfterDiscount * request.TaxValue.Value) / 100m, 2);
+                    }
+                    else if (request.TaxType.Equals("flat", StringComparison.OrdinalIgnoreCase))
+                    {
+                        taxAmount = Math.Round(request.TaxValue.Value, 2);
+                    }
+                }
+                // Case 2: No tax fields in request, keep existing tax
+                else if (existingOrder.TaxValue > 0 && !string.IsNullOrEmpty(existingOrder.TaxType))
+                {
+                    if (existingOrder.TaxType.Equals("percentage", StringComparison.OrdinalIgnoreCase))
+                    {
+                        taxAmount = Math.Round((amountAfterDiscount * existingOrder.TaxValue.Value) / 100m, 2);
+                    }
+                    else if (existingOrder.TaxType.Equals("flat", StringComparison.OrdinalIgnoreCase))
+                    {
+                        taxAmount = Math.Round(existingOrder.TaxValue.Value, 2);
+                    }
+                }
+
+                decimal finalPayable = amountAfterDiscount + taxAmount;
+
+                // 6. Update order with all fields including tax
+                existingOrder.CustomerId = customerId > 0 ? customerId : null;
+                existingOrder.PaymentType = request.PaymentType;
+                existingOrder.TotalAmount = finalPayable;
+                existingOrder.GrossTotal = grossTotalAll;
+                existingOrder.TotalDiscount = totalDiscountAll;
+                existingOrder.ItemsCount = itemCount;
+                existingOrder.OrderDiscountType = request.OrderDiscountType;
+                existingOrder.OrderDiscountValue = request.OrderDiscountValue;
+                existingOrder.OrderDiscountAmount = orderDiscountAmount;
+
+                // UPDATE TAX FIELDS - Use request values if provided, otherwise keep existing
+                existingOrder.TaxType = !string.IsNullOrEmpty(request.TaxType) ? request.TaxType : existingOrder.TaxType;
+                existingOrder.TaxValue = request.TaxValue ?? existingOrder.TaxValue;
+                existingOrder.TaxAmount = taxAmount;
+
+                // 7. Update tracking fields - FIXED
+                existingOrder.IsEdited = true;
+                existingOrder.EditedBy = userId;
+                existingOrder.EditedAt = DateTime.UtcNow;
+                existingOrder.EditCount = existingOrder.EditCount + 1; // ✅ FIXED - no null coalescing needed
+
+                // 8. Save changes
+                var updated = await _coreRepository.UpdateOrderWithItemsAsync(existingOrder, orderItems);
+
+                if (!updated)
+                {
+                    return new EditOrderResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "Failed to update order"
+                    };
+                }
+
+                // 9. Log the edit with tax fields included
+                var newValues = JsonConvert.SerializeObject(new
+                {
+                    existingOrder.CustomerId,
+                    existingOrder.PaymentType,
+                    existingOrder.TotalAmount,
+                    existingOrder.ItemsCount,
+                    existingOrder.TaxType,
+                    existingOrder.TaxValue,
+                    existingOrder.TaxAmount
+                });
+
+                //var changes = $"Old: {oldValues} | New: {newValues}";
+                //await _coreRepository.LogOrderEditAsync(request.OrderId, userId, changes);
+
+                // 10. Get updated order for response
+                var historyResult = await GetOrderHistoryAsync(new OrderHistoryRequest
+                {
+                    FromDate = DateTime.MinValue.ToString("yyyy-MM-dd"),
+                    ToDate = DateTime.MaxValue.ToString("yyyy-MM-dd")
+                }, merchantId);
+
+                OrderHistoryResponse? updatedOrder = null;
+
+                // Safely extract the order from the result using proper type checking
+                if (historyResult != null)
+                {
+                    var historyType = historyResult.GetType();
+                    var dataProperty = historyType.GetProperty("Data");
+
+                    if (dataProperty != null)
+                    {
+                        var dataValue = dataProperty.GetValue(historyResult);
+                        if (dataValue is List<OrderHistoryResponse> orders)
+                        {
+                            updatedOrder = orders.FirstOrDefault(o => o.Id == request.OrderId);
+                        }
+                    }
+                }
+
+                return new EditOrderResponse
+                {
+                    ResponseCode = "00",
+                    ResponseMessage = "Order updated successfully",
+                    UpdatedOrder = updatedOrder
+                };
+            }
+            catch (Exception ex)
+            {
+                await LogWrite("Error-EditOrder", ex.Message, "CoreService.EditOrderAsync", merchantId.ToString());
+                return new EditOrderResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "Something went wrong while editing order"
+                };
+            }
+        }
+
     }
 }
 

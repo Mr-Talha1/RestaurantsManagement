@@ -732,6 +732,41 @@ namespace BIPL_RAASTP2M.Controllers
                 });
             }
         }
+
+        [HttpPost("EditOrder")]
+        [Authorize]
+        public async Task<IActionResult> EditOrder([FromBody] EditOrderRequest request)
+        {
+            var UserID = "";
+            try
+            {
+                var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+                var tokenData = await _jwtFactory.ValidateJwtToken(token);
+
+                if (tokenData == null || tokenData.MerchantId <= 0)
+                {
+                    return Ok(new EditOrderResponse
+                    {
+                        ResponseCode = "04",
+                        ResponseMessage = "User is unauthorized"
+                    });
+                }
+
+                UserID = tokenData.UserID;
+
+                var response = await _coreService.EditOrderAsync(request, tokenData.MerchantId, UserID);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                await _coreService.LogWrite("Error-EditOrder", ex.Message, "CoreController:EditOrder", UserID ?? "System");
+                return Ok(new EditOrderResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "Something went wrong"
+                });
+            }
+        }
     }
 
 }

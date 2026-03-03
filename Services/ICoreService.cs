@@ -31,5 +31,6 @@ namespace BIPL_RAASTP2M.Services
         Task<object> SearchCustomersAsync(string query, long merchantId);
         Task<DefaultResponse> RefundOrderAsync(long OrderId, long merchantId, string userId);
         Task<ReportResponseDto> GetReportAsync(ReportRequestDto request, long merchantId);
+        Task<EditOrderResponse> EditOrderAsync(EditOrderRequest request, long merchantId, string userId);
     }
 }
