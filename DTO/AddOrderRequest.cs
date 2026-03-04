@@ -16,5 +16,8 @@
         public string? DeliveryAddress { get; set; }
         public List<OrderItemRequest> Items { get; set; }
 
+        public string? TaxType { get; set; } 
+        public decimal? TaxValue { get; set; }
+
     }
 }

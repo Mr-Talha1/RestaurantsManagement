@@ -1111,9 +1111,36 @@ namespace BIPL_RAASTP2M.Services
                     if (orderDiscountAmount > subTotal) orderDiscountAmount = subTotal;
                 }
 
-                // Final totals
+
+                // ========================
+                // CALCULATE AMOUNT AFTER DISCOUNT (BEFORE TAX)
+                // ========================
+                decimal amountAfterDiscount = Math.Round(subTotal - orderDiscountAmount, 2);
+
                 decimal totalDiscountAll = Math.Round(totalItemDiscounts + orderDiscountAmount, 2);
-                decimal finalPayable = Math.Round(subTotal - orderDiscountAmount, 2);
+
+                // ========================
+                // APPLY TAX AFTER DISCOUNT (ONLY if tax info is provided)
+                // ========================
+                decimal taxAmount = 0m;
+                if (!string.IsNullOrEmpty(model.TaxType) && model.TaxValue.HasValue && model.TaxValue > 0)
+                {
+                    if (model.TaxType.Equals("percentage", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Percentage tax: e.g., 15% of amount after discount
+                        taxAmount = Math.Round((amountAfterDiscount * model.TaxValue.Value) / 100m, 2);
+                    }
+                    else if (model.TaxType.Equals("flat", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Flat tax: e.g., $5 fixed tax per order
+                        taxAmount = Math.Round(model.TaxValue.Value, 2);
+                    }
+                }
+
+                // ========================
+                // FINAL TOTAL (Amount after discount + Tax)
+                // ========================
+                decimal finalPayable = amountAfterDiscount + taxAmount;
 
 
                 // ========================
@@ -1137,7 +1164,12 @@ namespace BIPL_RAASTP2M.Services
                     CreatedAt = DateTime.Now,
                     OrderDiscountType=model.OrderDiscountType,
                     OrderDiscountValue=model.OrderDiscountValue,
-                    OrderDiscountAmount=orderDiscountAmount
+                    OrderDiscountAmount=orderDiscountAmount,
+
+                    // TAX FIELDS - Now optional (will be null if no tax)
+                    TaxType = !string.IsNullOrEmpty(model.TaxType) ? model.TaxType : null,
+                    TaxValue = model.TaxValue,
+                    TaxAmount = taxAmount > 0 ? taxAmount : (decimal?)null
                 };
 
                 long orderId = await _coreRepository.AddOrderAsync(newOrder);
