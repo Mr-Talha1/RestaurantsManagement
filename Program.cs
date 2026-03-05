@@ -70,6 +70,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 
 // Secret Key for JWT Signing
@@ -111,7 +112,7 @@ builder.Services.AddSwaggerGen(c =>
 
 // Add database context
 builder.Services.AddDbContext<AppDbContext>(options =>
-   options.UseSqlServer(builder.Configuration.GetConnectionString("KuickpayDB"), options =>
+   options.UseNpgsql(builder.Configuration.GetConnectionString("KuickpayDB"), options =>
    {
        options.CommandTimeout(180); // 3 minutes
    }));
