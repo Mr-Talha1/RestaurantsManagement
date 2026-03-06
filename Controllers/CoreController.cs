@@ -882,7 +882,35 @@ namespace BIPL_RAASTP2M.Controllers
                 });
             }
         }
+        [HttpGet("public/website/{subdomain}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetWebsiteBySubdomain(string subdomain)
+        {
+            try
+            {
+                var result = await _coreService.GetWebsiteConfigBySubdomainAsync(subdomain);
 
+                if (result == null)
+                {
+                    return NotFound(new
+                    {
+                        responseCode = "404",
+                        responseMessage = "Restaurant not found"
+                    });
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                await _coreService.LogWrite("Error-GetWebsiteBySubdomain", ex.Message, "CoreController:GetWebsiteBySubdomain", subdomain);
+                return StatusCode(500, new
+                {
+                    responseCode = "05",
+                    responseMessage = "Something went wrong"
+                });
+            }
+        }
     }
 
 }
