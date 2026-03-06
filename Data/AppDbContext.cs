@@ -17,6 +17,7 @@ namespace BIPL_RAASTP2M.Data
         public DbSet<Orders> Orders { get; set; }
         public DbSet<OrderItems> OrderItems { get; set; }
         public DbSet<Customers> Customers { get; set; }
+        public DbSet<WebsiteConfig> WebsiteConfigs { get; set; }
        
     }
 

@@ -43,5 +43,10 @@ namespace BIPL_RAASTP2M.Repositories
         Task<OrderStatsDto> GetOrderStatsAsync(long merchantId, DateTime fromDate, DateTime toDate);
         Task<Orders> GetOrderForEditAsync(long orderId, long merchantId);
         Task<bool> UpdateOrderWithItemsAsync(Orders order, List<OrderItems> items);
+        Task<WebsiteConfig?> GetWebsiteConfigBySubdomainAsync(string subdomain);
+        Task<WebsiteConfig?> GetWebsiteConfigByMerchantIdAsync(long merchantId);
+        Task<bool> CreateDefaultWebsiteConfigAsync(WebsiteConfig config);
+        Task<bool> UpdateWebsiteConfigAsync(WebsiteConfig config);
+        Task<MenuResponseDto> GetMenuBySubdomainAsync(string subdomain);
     }
 }

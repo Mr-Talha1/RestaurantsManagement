@@ -32,5 +32,11 @@ namespace BIPL_RAASTP2M.Services
         Task<DefaultResponse> RefundOrderAsync(long OrderId, long merchantId, string userId);
         Task<ReportResponseDto> GetReportAsync(ReportRequestDto request, long merchantId);
         Task<EditOrderResponse> EditOrderAsync(EditOrderRequest request, long merchantId, string userId);
+        Task<WebsiteConfigResponseDto?> GetWebsiteConfigBySubdomainAsync(string subdomain);
+        Task<WebsiteConfigResponseDto?> GetWebsiteConfigByMerchantIdAsync(long merchantId);
+        Task<DefaultResponse> UpdateWebsiteConfigAsync(long merchantId, UpdateWebsiteConfigDto updateDto);
+        Task<MenuResponseDto> GetMenuBySubdomainAsync(string subdomain);
+
     }
 }
+

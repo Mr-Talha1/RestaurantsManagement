@@ -767,6 +767,122 @@ namespace BIPL_RAASTP2M.Controllers
                 });
             }
         }
+
+
+        [HttpGet("merchant/website")]
+        [Authorize]
+        public async Task<IActionResult> GetMerchantWebsite()
+        {
+            var UserID = "";
+            try
+            {
+                var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+                var tokenData = await _jwtFactory.ValidateJwtToken(token);
+
+                if (tokenData == null || tokenData.MerchantId <= 0)
+                {
+                    return Ok(new DefaultResponse
+                    {
+                        ResponseCode = "04",
+                        ResponseMessage = "User is unauthorized"
+                    });
+                }
+
+                UserID = tokenData.UserID;
+                var result = await _coreService.GetWebsiteConfigByMerchantIdAsync(tokenData.MerchantId);
+
+                if (result == null)
+                {
+                    return Ok(new DefaultResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "Website configuration not found"
+                    });
+                }
+
+                return Ok(new
+                {
+                    responseCode = "00",
+                    responseMessage = "Success",
+                    data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                await _coreService.LogWrite("Error-GetMerchantWebsite", ex.Message, "CoreController:GetMerchantWebsite", UserID ?? "System");
+                return Ok(new DefaultResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "Something went wrong"
+                });
+            }
+        }
+
+        /// <summary>
+        /// Update website configuration for current merchant (Requires Auth)
+        /// Used by POS app to customize website settings
+        /// </summary>
+        [HttpPut("merchant/website")]
+        [Authorize]
+        public async Task<IActionResult> UpdateMerchantWebsite([FromBody] UpdateWebsiteConfigDto updateDto)
+        {
+            var UserID = "";
+            try
+            {
+                var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+                var tokenData = await _jwtFactory.ValidateJwtToken(token);
+
+                if (tokenData == null || tokenData.MerchantId <= 0)
+                {
+                    return Ok(new DefaultResponse
+                    {
+                        ResponseCode = "04",
+                        ResponseMessage = "User is unauthorized"
+                    });
+                }
+
+                UserID = tokenData.UserID;
+                var result = await _coreService.UpdateWebsiteConfigAsync(tokenData.MerchantId, updateDto);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                await _coreService.LogWrite("Error-UpdateMerchantWebsite", ex.Message, "CoreController:UpdateMerchantWebsite", UserID ?? "System");
+                return Ok(new DefaultResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "Something went wrong"
+                });
+            }
+        }
+
+        [HttpGet("public/website/{subdomain}/menu")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetMenuBySubdomain(string subdomain)
+        {
+            try
+            {
+                var result = await _coreService.GetMenuBySubdomainAsync(subdomain);
+
+                return Ok(new
+                {
+                    responseCode = "00",
+                    responseMessage = "Success",
+                    data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                await _coreService.LogWrite("Error-GetMenuBySubdomain", ex.Message, "CoreController:GetMenuBySubdomain", subdomain);
+                return StatusCode(500, new
+                {
+                    responseCode = "05",
+                    responseMessage = "Something went wrong"
+                });
+            }
+        }
+
     }
 
 }

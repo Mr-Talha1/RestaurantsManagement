@@ -1673,6 +1673,190 @@ namespace BIPL_RAASTP2M.Services
             }
         }
 
+        //Website Work
+        public async Task<WebsiteConfigResponseDto?> GetWebsiteConfigBySubdomainAsync(string subdomain)
+        {
+            try
+            {
+                var config = await _coreRepository.GetWebsiteConfigBySubdomainAsync(subdomain);
+
+                if (config == null)
+                    return null;
+
+                return MapToWebsiteConfigResponseDto(config);
+            }
+            catch (Exception ex)
+            {
+                await LogWrite("Error-GetWebsiteConfigBySubdomain", ex.Message, "CoreService.GetWebsiteConfigBySubdomainAsync", "System");
+                return null;
+            }
+        }
+
+        public async Task<WebsiteConfigResponseDto?> GetWebsiteConfigByMerchantIdAsync(long merchantId)
+        {
+            try
+            {
+                var config = await _coreRepository.GetWebsiteConfigByMerchantIdAsync(merchantId);
+
+                if (config == null)
+                    return null;
+
+                return MapToWebsiteConfigResponseDto(config);
+            }
+            catch (Exception ex)
+            {
+                await LogWrite("Error-GetWebsiteConfigByMerchantId", ex.Message, "CoreService.GetWebsiteConfigByMerchantIdAsync", merchantId.ToString());
+                return null;
+            }
+        }
+
+
+        public async Task<DefaultResponse> UpdateWebsiteConfigAsync(long merchantId, UpdateWebsiteConfigDto updateDto)
+        {
+            try
+            {
+                var config = await _coreRepository.GetWebsiteConfigByMerchantIdAsync(merchantId);
+
+                if (config == null)
+                {
+                    return new DefaultResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "Website configuration not found"
+                    };
+                }
+
+                // Update fields if provided
+                if (!string.IsNullOrEmpty(updateDto.LogoUrl))
+                    config.LogoUrl = updateDto.LogoUrl;
+
+                if (!string.IsNullOrEmpty(updateDto.PrimaryColor))
+                    config.PrimaryColor = updateDto.PrimaryColor;
+
+                if (!string.IsNullOrEmpty(updateDto.SecondaryColor))
+                    config.SecondaryColor = updateDto.SecondaryColor;
+
+                if (!string.IsNullOrEmpty(updateDto.BackgroundColor))
+                    config.BackgroundColor = updateDto.BackgroundColor;
+
+                if (!string.IsNullOrEmpty(updateDto.HeroTitle))
+                    config.HeroTitle = updateDto.HeroTitle;
+
+                if (!string.IsNullOrEmpty(updateDto.HeroDescription))
+                    config.HeroDescription = updateDto.HeroDescription;
+
+                if (updateDto.WorkingHours != null)
+                    config.WorkingHours = JsonConvert.SerializeObject(updateDto.WorkingHours);
+
+                if (!string.IsNullOrEmpty(updateDto.ContactPhone))
+                    config.ContactPhone = updateDto.ContactPhone;
+
+                if (!string.IsNullOrEmpty(updateDto.ContactEmail))
+                    config.ContactEmail = updateDto.ContactEmail;
+
+                if (!string.IsNullOrEmpty(updateDto.ContactAddress))
+                    config.ContactAddress = updateDto.ContactAddress;
+
+                if (updateDto.IsActive.HasValue)
+                    config.IsActive = updateDto.IsActive.Value;
+
+                bool updated = await _coreRepository.UpdateWebsiteConfigAsync(config);
+
+                if (!updated)
+                {
+                    return new DefaultResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "Failed to update website configuration"
+                    };
+                }
+
+                await LogWrite("WebsiteConfigUpdated", $"Website config updated for merchant {merchantId}", "CoreService.UpdateWebsiteConfigAsync", merchantId.ToString());
+
+                return new DefaultResponse
+                {
+                    ResponseCode = "00",
+                    ResponseMessage = "Website configuration updated successfully"
+                };
+            }
+            catch (Exception ex)
+            {
+                await LogWrite("Error-UpdateWebsiteConfig", ex.Message, "CoreService.UpdateWebsiteConfigAsync", merchantId.ToString());
+                return new DefaultResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "Something went wrong while updating website configuration"
+                };
+            }
+        }
+
+
+        // ==================== HELPER METHODS ====================
+
+        private WebsiteConfigResponseDto MapToWebsiteConfigResponseDto(WebsiteConfig config)
+        {
+            var response = new WebsiteConfigResponseDto
+            {
+                Id = config.Id,
+                MerchantId = config.MerchantId,
+                Subdomain = config.Subdomain,
+                LogoUrl = config.LogoUrl,
+                PrimaryColor = config.PrimaryColor,
+                SecondaryColor = config.SecondaryColor,
+                BackgroundColor = config.BackgroundColor,
+                HeroTitle = config.HeroTitle,
+                HeroDescription = config.HeroDescription,
+                ContactPhone = config.ContactPhone,
+                ContactEmail = config.ContactEmail,
+                ContactAddress = config.ContactAddress,
+                IsActive = config.IsActive,
+                CreatedAt = config.CreatedAt,
+                UpdatedAt = config.UpdatedAt
+            };
+
+            // Parse working hours JSON if exists
+            if (!string.IsNullOrEmpty(config.WorkingHours))
+            {
+                try
+                {
+                    response.WorkingHours = JsonConvert.DeserializeObject<List<WorkingHoursResponseDto>>(config.WorkingHours);
+                }
+                catch
+                {
+                    response.WorkingHours = new List<WorkingHoursResponseDto>();
+                }
+            }
+
+            return response;
+        }
+
+        private string GenerateSubdomainFromName(string name)
+        {
+            // Convert to lowercase, replace spaces with hyphens, remove special characters
+            string subdomain = name.ToLower()
+                .Replace(" ", "-")
+                .Replace("'", "")
+                .Replace(".", "")
+                .Replace("&", "and");
+
+            // Remove any non-alphanumeric characters except hyphens
+            subdomain = Regex.Replace(subdomain, @"[^a-z0-9-]", "");
+
+            return subdomain;
+        }
+
+        public async Task<MenuResponseDto> GetMenuBySubdomainAsync(string subdomain)
+        {
+            try
+            {
+                return await _coreRepository.GetMenuBySubdomainAsync(subdomain);
+            }
+            catch (Exception ex)
+            {
+                await LogWrite("Error-GetMenuBySubdomain", ex.Message, "CoreService.GetMenuBySubdomainAsync", subdomain);
+                return new MenuResponseDto();
+            }
+        }
     }
 }
 

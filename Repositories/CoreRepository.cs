@@ -1045,5 +1045,146 @@ namespace BIPL_RAASTP2M.Repositories
                 return false;
             }
         }
+
+        //Website Work
+        public async Task<WebsiteConfig?> GetWebsiteConfigBySubdomainAsync(string subdomain)
+        {
+            try
+            {
+                return await _appDbContext.WebsiteConfigs
+                    .Include(w => w.Merchant)
+                    .FirstOrDefaultAsync(w => w.Subdomain.ToLower() == subdomain.ToLower() && w.IsActive);
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetWebsiteConfigBySubdomain", ex.Message, "CoreRepository:GetWebsiteConfigBySubdomainAsync", "System");
+                return null;
+            }
+        }
+
+        public async Task<WebsiteConfig?> GetWebsiteConfigByMerchantIdAsync(long merchantId)
+        {
+            try
+            {
+                return await _appDbContext.WebsiteConfigs
+                    .FirstOrDefaultAsync(w => w.MerchantId == merchantId);
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetWebsiteConfigByMerchantId", ex.Message, "CoreRepository:GetWebsiteConfigByMerchantIdAsync", merchantId.ToString());
+                return null;
+            }
+        }
+
+        public async Task<bool> CreateDefaultWebsiteConfigAsync(WebsiteConfig config)
+        {
+            try
+            {
+                await _appDbContext.WebsiteConfigs.AddAsync(config);
+                return await _appDbContext.SaveChangesAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-CreateDefaultWebsiteConfig", ex.Message, "CoreRepository:CreateDefaultWebsiteConfigAsync", config.MerchantId.ToString());
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateWebsiteConfigAsync(WebsiteConfig config)
+        {
+            try
+            {
+                config.UpdatedAt = DateTime.Now;
+                _appDbContext.WebsiteConfigs.Update(config);
+                return await _appDbContext.SaveChangesAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-UpdateWebsiteConfig", ex.Message, "CoreRepository:UpdateWebsiteConfigAsync", config.MerchantId.ToString());
+                return false;
+            }
+        }
+
+        public async Task<MenuResponseDto> GetMenuBySubdomainAsync(string subdomain)
+        {
+            try
+            {
+                // First get the merchant from subdomain
+                var websiteConfig = await _appDbContext.WebsiteConfigs
+                    .FirstOrDefaultAsync(w => w.Subdomain.ToLower() == subdomain.ToLower() && w.IsActive);
+
+                if (websiteConfig == null)
+                    return new MenuResponseDto();
+
+                long merchantId = websiteConfig.MerchantId;
+
+                // Get all categories for this merchant that are NOT deleted
+                var categories = await _appDbContext.Categories
+                    .Where(c => c.MerchantId == merchantId && !c.IsDeleted)  // Added !c.IsDeleted
+                    .OrderBy(c => c.CategoryName)
+                    .ToListAsync();
+
+                // Get all products for this merchant that are NOT deleted
+                var products = await _appDbContext.Products
+                    .Where(p => p.MerchantId == merchantId && !p.IsDeleted)  // Added !p.IsDeleted
+                    .ToListAsync();
+
+                var menuResponse = new MenuResponseDto();
+
+                foreach (var category in categories)
+                {
+                    var categoryDto = new CategoryMenuDto
+                    {
+                        Id = category.Id,
+                        Name = category.CategoryName,
+                        Products = products
+                            .Where(p => p.CategoryId == category.Id)
+                            .Select(p => new ProductMenuDto
+                            {
+                                Id = p.Id,
+                                Name = p.ProductName,
+                                Price = p.ProductPrice,
+                                ImageUrl = p.ImagePath,
+                                CategoryId = p.CategoryId
+                                // Removed Description and IsAvailable
+                            })
+                            .ToList()
+                    };
+
+                    menuResponse.Categories.Add(categoryDto);
+                }
+
+                // Optional: Add uncategorized products (categoryId = null)
+                var uncategorizedProducts = products
+                    .Where(p => p.CategoryId == null)
+                    .Select(p => new ProductMenuDto
+                    {
+                        Id = p.Id,
+                        Name = p.ProductName,
+                        Price = p.ProductPrice,
+                        ImageUrl = p.ImagePath,
+                        CategoryId = p.CategoryId
+                        // Removed Description and IsAvailable
+                    })
+                    .ToList();
+
+                if (uncategorizedProducts.Any())
+                {
+                    menuResponse.Categories.Add(new CategoryMenuDto
+                    {
+                        Id = 0,
+                        Name = "Other Items",
+                        Products = uncategorizedProducts
+                    });
+                }
+
+                return menuResponse;
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetMenuBySubdomain", ex.Message, "CoreRepository:GetMenuBySubdomainAsync", subdomain);
+                return new MenuResponseDto();
+            }
+        }
     }
 }
