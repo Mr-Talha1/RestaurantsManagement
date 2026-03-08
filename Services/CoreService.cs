@@ -1227,12 +1227,15 @@ namespace BIPL_RAASTP2M.Services
                 var list = await _coreRepository
                     .GetOrderHistoryAsync(merchantId, DateFrom, DateTo);
 
+                var TotalRevenue = list.Sum(x => x.TotalAmount);
+
                 return new
                 {
                     ResponseCode = "00",
                     ResponseMessage = "Success",
                     Data = list,
-                    OrderCount=list.Count
+                    OrderCount=list.Count,
+                    Revenue = TotalRevenue
                 };
             }
             catch (Exception ex)
