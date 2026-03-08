@@ -15,7 +15,7 @@ namespace BIPL_RAASTP2M.Services
         public Task LogWrite(string Activity, string Description, string Interface,string UserID);
         Task<dynamic> LoginServiceAsync(LoginRequestDto model);
         Task<List<DiningTables>> GetDiningTablesService(long merchantId, string UserID);
-        Task<bool> AddDiningTableService(DiningTableDto req, long merchantId);
+        Task<DefaultResponse> AddDiningTableService(DiningTableDto req, long merchantId);
         Task<DefaultResponse> UpdateDiningTableAsync(DiningTableDto request, long MerchantId);
         Task<DefaultResponse> DeleteDiningTableAsync(int id, long merchantId);
         Task<DefaultResponse> AddCategoryService(CategoryDto model, long merchantId);

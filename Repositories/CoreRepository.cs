@@ -97,7 +97,12 @@ namespace BIPL_RAASTP2M.Repositories
                 return new List<DiningTables>();
             }
         }
-
+        public async Task<bool> GetDiningTableByNameAsync(string name, long merchantId)
+        {
+            return await _appDbContext.DiningTables.AnyAsync(p => p.MerchantId == merchantId
+                                                    && p.Name == name
+                                                    && p.IsDeleted == false);
+        }
         public async Task<bool> AddDiningTableAsync(DiningTables table)
         {
             try

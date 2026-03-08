@@ -48,5 +48,6 @@ namespace BIPL_RAASTP2M.Repositories
         Task<bool> CreateDefaultWebsiteConfigAsync(WebsiteConfig config);
         Task<bool> UpdateWebsiteConfigAsync(WebsiteConfig config);
         Task<MenuResponseDto> GetMenuBySubdomainAsync(string subdomain);
+        Task<bool> GetDiningTableByNameAsync(string name, long merchantId);
     }
 }

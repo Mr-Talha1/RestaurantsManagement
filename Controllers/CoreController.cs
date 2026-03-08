@@ -146,22 +146,8 @@ namespace BIPL_RAASTP2M.Controllers
 
                     // Call service
                     var result = await _coreService.AddDiningTableService(req, merchantId);
-
-                if (result)
-                {
-                    return Ok(new DefaultResponse
-                    {
-                        ResponseCode = "00",
-                        ResponseMessage = "Table Added Successfully.",
-                    });
-                }
-                else {
-                    return Ok(new DefaultResponse
-                    {
-                        ResponseCode = "01",
-                        ResponseMessage = "Failed to Add Table.",
-                    });
-                }
+                return Ok(result);
+               
 
                 }
                 catch (Exception ex)

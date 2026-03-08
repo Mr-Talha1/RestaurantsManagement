@@ -310,9 +310,21 @@ namespace BIPL_RAASTP2M.Services
         {
             return await _coreRepository.GetDiningTables(merchantId, UserID);
         }
-        public async Task<bool> AddDiningTableService(DiningTableDto req, long merchantId)
+        public async Task<DefaultResponse> AddDiningTableService(DiningTableDto req, long merchantId)
         {
-            DiningTables table = new DiningTables
+            try
+            {
+                // duplicate name check
+                if (await _coreRepository.GetDiningTableByNameAsync(req.Name, merchantId))
+                {
+                    return new DefaultResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "Table name already exists"
+                    };
+                }
+
+                DiningTables table = new DiningTables
             {
                 MerchantId = merchantId,
                 Name = req.Name,
@@ -320,7 +332,36 @@ namespace BIPL_RAASTP2M.Services
                 CreatedAt = DateTime.Now
             };
 
-            return await _coreRepository.AddDiningTableAsync(table);
+            var result = await _coreRepository.AddDiningTableAsync(table);
+
+                if (result)
+                {
+                    return new DefaultResponse
+                    {
+                        ResponseCode = "00",
+                        ResponseMessage = "Table Added Successfully.",
+                    };
+                }
+                else
+                {
+                    return new DefaultResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "Failed to Add Table.",
+                    };
+                }
+
+            }
+             catch (Exception ex)
+            {
+                await LogWrite("Error-AddDiningTableService", ex.Message, "CoreService:AddDiningTableService", merchantId.ToString() ?? "System");
+                return new DefaultResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "Something went wrong"
+                };
+
+            }
         }
         public async Task<DefaultResponse> UpdateDiningTableAsync(DiningTableDto request,long MerchantId)
         {
