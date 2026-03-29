@@ -260,7 +260,7 @@ namespace BIPL_RAASTP2M.Services
                             UserId = GetUser.UserID,
                             FullName = GetUser.FullName,
                             MerchantId = GetMerchnat.Id,
-                            MerchantName = GetMerchnat.Name,
+                            BusinessName = GetMerchnat.Name,
                             LogoPath = GetMerchnat.LogoPath
                         }
                     };
@@ -289,7 +289,9 @@ namespace BIPL_RAASTP2M.Services
                         FullName = GetUser.FullName,
                         Role = GetUser.Role,
                         MerchantId = GetMerchnat.Id,
-                        MerchantName = GetMerchnat.Name,
+                        BusinessName = GetMerchnat.Name,
+                        BusinessAddress = GetMerchnat.Address,
+                        BusinessMobileNumber = GetMerchnat.MobileNumber,
                         LogoPath = GetMerchnat.LogoPath
                     },
                    Token = await _jwtFactory.LoginToken(GetUser.Role,GetUser.UserID, GetMerchnat.Id.ToString())

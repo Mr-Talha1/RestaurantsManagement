@@ -13,7 +13,9 @@
         public string FullName { get; set; } = null!;
         public string? Role { get; set; }
         public long? MerchantId { get; set; }
-        public string? MerchantName { get; set; }
+        public string? BusinessName { get; set; }
+        public string? BusinessAddress { get; set; }
+        public string? BusinessMobileNumber { get; set; }
         public string? LogoPath { get; set; }
     }
 }
