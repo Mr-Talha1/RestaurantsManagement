@@ -1497,26 +1497,38 @@ namespace BIPL_RAASTP2M.Services
 
                 // 4. Handle customer
                 long customerId = existingOrder.CustomerId ?? 0;
-                if (!string.IsNullOrEmpty(request.CustomerPhone))
+                if (request.CustomerId.HasValue)
                 {
-                    var existingCustomer = await _coreRepository.GetCustomersbyPhoneNumber(merchantId, request.CustomerPhone);
-                    if (existingCustomer == null || existingCustomer.CustomerId == 0)
+                    var existingCustomer = await _coreRepository.GetCustomersbyCustomerId(merchantId, request.CustomerId ?? 0);
+
+                    if (existingCustomer != null || existingCustomer.CustomerId != 0)
                     {
-                        var newCustomer = new Customers
-                        {
-                            MerchantId = merchantId,
-                            CustomerName = request.CustomerName,
-                            CustomerPhone = request.CustomerPhone,
-                            DeliveryAddress = request.DeliveryAddress,
-                            CreatedAt = DateTime.Now
-                        };
-                        await _coreRepository.AddCustomer(newCustomer);
-                        customerId = newCustomer.CustomerId;
+                        //var newCustomer = new Customers
+                        //{
+                        //    MerchantId = merchantId,
+                        //    CustomerName = request.CustomerName,
+                        //    CustomerPhone = request.CustomerPhone,
+                        //    DeliveryAddress = request.DeliveryAddress,
+                        //    CreatedAt = DateTime.Now
+                        //};
+                        existingCustomer.CustomerName = request.CustomerName;
+                        existingCustomer.DeliveryAddress = request.DeliveryAddress;
+                        existingCustomer.CustomerPhone = request.CustomerPhone;
+                        await _coreRepository.UpdatCustomersAsync(existingCustomer);
+                        //customerId = newCustomer.CustomerId;
                     }
-                    else
-                    {
-                        customerId = existingCustomer.CustomerId;
-                    }
+
+                    //else
+                    //{
+                    //    var UpdateCustomer = new Customers
+                    //    {
+                    //        MerchantId = merchantId,
+                    //        CustomerName = request.CustomerName,
+                    //        CustomerPhone = request.CustomerPhone,
+                    //        DeliveryAddress = request.DeliveryAddress,
+                    //        CreatedAt = DateTime.Now
+                    //    };
+                    //}
                 }
 
                 // 5. Recalculate everything (same as AddOrder logic)

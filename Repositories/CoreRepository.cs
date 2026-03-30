@@ -503,6 +503,34 @@ namespace BIPL_RAASTP2M.Repositories
                 return new Customers();
             }
         }
+        public async Task<Customers> GetCustomersbyCustomerId(long merchantId, long CustomerId)
+        {
+            try
+            {
+                return await _appDbContext.Customers
+                    .FirstOrDefaultAsync(x => x.MerchantId == merchantId && x.CustomerId == CustomerId) ?? new Customers();
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetCustomersbyCustomerId", ex.Message, "CoreRepository:GetCustomersbyCustomerId", merchantId.ToString() ?? "System");
+
+                return new Customers();
+            }
+        }
+        public async Task<bool> UpdatCustomersAsync(Customers customers)
+        {
+            try
+            {
+                _appDbContext.Customers.Update(customers);
+                return (await _appDbContext.SaveChangesAsync()) > 0;
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-UpdatCustomersAsync", ex.Message, "CoreRepository:UpdatCustomersAsync", "System");
+
+                return false;
+            }
+        }
         public async Task<bool> AddCustomer(Customers customers)
         {
             try

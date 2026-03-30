@@ -8,6 +8,7 @@ namespace BIPL_RAASTP2M.DTO
         public long OrderId { get; set; }
 
         // Customer Information
+        public long? CustomerId { get; set; }
         public string? CustomerName { get; set; }
         public string? CustomerPhone { get; set; }
         public string? DeliveryAddress { get; set; }
@@ -25,9 +26,9 @@ namespace BIPL_RAASTP2M.DTO
         public decimal? TaxValue { get; set; } // 15 or 5 - optional
 
         // Items
-        [Required]
-        [MinLength(1)]
-        public List<EditOrderItemDto> Items { get; set; }
+        //[Required]
+        //[MinLength(1)]
+        public List<EditOrderItemDto>? Items { get; set; }
     }
 
     public class EditOrderItemDto
