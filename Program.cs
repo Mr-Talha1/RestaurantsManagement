@@ -112,7 +112,7 @@ builder.Services.AddSwaggerGen(c =>
 
 // Add database context
 builder.Services.AddDbContext<AppDbContext>(options =>
-   options.UseNpgsql(builder.Configuration.GetConnectionString("KuickpayDB"), options =>
+   options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"), options =>
    {
        options.CommandTimeout(180); // 3 minutes
    }));
