@@ -1,7 +1,7 @@
-﻿using BIPL_RAASTP2M.Models;
+﻿using TBAppBackend.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace BIPL_RAASTP2M.Data
+namespace TBAppBackend.Data
 {
     public class AppDbContext : DbContext
     {

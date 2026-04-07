@@ -9,12 +9,12 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using BIPL_RAASTP2M.Security;
+using TBAppBackend.Security;
 using System.IO;
 using Microsoft.Extensions.Configuration;
-using BIPL_RAASTP2M.Models;
+using TBAppBackend.Models;
 
-namespace BIPL_RAASTP2M.Security
+namespace TBAppBackend.Security
 {
     public class JwtFactory : IJwtFactory
     {

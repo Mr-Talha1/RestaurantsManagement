@@ -1,7 +1,7 @@
-//using BIPL_RAASTP2M.Data;
-//using BIPL_RAASTP2M.Repositories;
-//using BIPL_RAASTP2M.Security;
-//using BIPL_RAASTP2M.Services;
+//using TBAppBackend.Data;
+//using TBAppBackend.Repositories;
+//using TBAppBackend.Security;
+//using TBAppBackend.Services;
 //using Microsoft.EntityFrameworkCore;
 //using Microsoft.IdentityModel.Tokens;
 //using System.Text;
@@ -60,10 +60,10 @@
 //app.MapControllers();
 //app.Run();
 
-using BIPL_RAASTP2M.Data;
-using BIPL_RAASTP2M.Repositories;
-using BIPL_RAASTP2M.Security;
-using BIPL_RAASTP2M.Services;
+using TBAppBackend.Data;
+using TBAppBackend.Repositories;
+using TBAppBackend.Security;
+using TBAppBackend.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -84,7 +84,7 @@ builder.Services.AddEndpointsApiExplorer();
 // Add Swagger with JWT Authentication support
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "BIPL_RAASTP2M API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "TBAppBackend API", Version = "v1" });
 
     // Add security definition for JWT
     var securitySchema = new OpenApiSecurityScheme
@@ -218,7 +218,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "BIPL_RAASTP2M API V1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "TBAppBackend API V1");
     });
 }
 

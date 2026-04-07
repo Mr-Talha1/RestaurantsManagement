@@ -1,5 +1,5 @@
-﻿using BIPL_RAASTP2M.Models;
-using BIPL_RAASTP2M.Repositories;
+﻿using TBAppBackend.Models;
+using TBAppBackend.Repositories;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
@@ -34,12 +34,12 @@ using System.Data;
 using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Authorization;
 using static System.Net.WebRequestMethods;
-using BIPL_RAASTP2M.Security;
+using TBAppBackend.Security;
 using System.ComponentModel.DataAnnotations;
-using BIPL_RAASTP2M.DTO;
+using TBAppBackend.DTO;
 using Microsoft.EntityFrameworkCore;
 
-namespace BIPL_RAASTP2M.Services
+namespace TBAppBackend.Services
 {
     public class CoreService : ICoreService
     {

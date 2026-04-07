@@ -6,7 +6,7 @@ using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.Extensions.Options;
 using ResourceType = CloudinaryDotNet.Actions.ResourceType;
-namespace BIPL_RAASTP2M.Services
+namespace TBAppBackend.Services
 {
     public class CloudinarySettings
     {

@@ -1,11 +1,11 @@
-﻿using BIPL_RAASTP2M.DTO;
-using BIPL_RAASTP2M.Models;
+﻿using TBAppBackend.DTO;
+using TBAppBackend.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace BIPL_RAASTP2M.Services
+namespace TBAppBackend.Services
 {
     public interface ICoreService 
     {

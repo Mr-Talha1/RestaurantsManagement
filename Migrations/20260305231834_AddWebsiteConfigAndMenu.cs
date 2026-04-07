@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace BIPL_RAASTP2M.Migrations
+namespace TBAppBackend.Migrations
 {
     public partial class AddWebsiteConfigAndMenu : Migration
     {

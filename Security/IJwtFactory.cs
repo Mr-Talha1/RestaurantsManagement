@@ -1,11 +1,11 @@
 ﻿
-using BIPL_RAASTP2M.Models;
+using TBAppBackend.Models;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
- namespace BIPL_RAASTP2M.Security
+ namespace TBAppBackend.Security
 {
     public interface IJwtFactory
     {

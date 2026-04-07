@@ -1,7 +1,7 @@
-﻿using BIPL_RAASTP2M.DTO;
-using BIPL_RAASTP2M.Models;
+﻿using TBAppBackend.DTO;
+using TBAppBackend.Models;
 
-namespace BIPL_RAASTP2M.Repositories
+namespace TBAppBackend.Repositories
 {
     public interface ICoreRepository
     {

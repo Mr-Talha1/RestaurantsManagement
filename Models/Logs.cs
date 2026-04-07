@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 
-namespace BIPL_RAASTP2M.Models
+namespace TBAppBackend.Models
 {
     public class Logs
     {

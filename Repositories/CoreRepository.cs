@@ -1,7 +1,7 @@
-﻿using BIPL_RAASTP2M.Data;
-using BIPL_RAASTP2M.DTO;
-using BIPL_RAASTP2M.Models;
-using BIPL_RAASTP2M.Services;
+﻿using TBAppBackend.Data;
+using TBAppBackend.DTO;
+using TBAppBackend.Models;
+using TBAppBackend.Services;
 using MailKit.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
@@ -25,7 +25,7 @@ using System.Reflection;
 using System.Text;
 using static System.Net.WebRequestMethods;
 
-namespace BIPL_RAASTP2M.Repositories
+namespace TBAppBackend.Repositories
 {
     public class CoreRepository : ICoreRepository
     {
@@ -54,7 +54,7 @@ namespace BIPL_RAASTP2M.Repositories
                     Activity = Activity.Length > 50 ? Activity.Substring(0, 48) : Activity,
                     Description = Description.Length > 500 ? Description.Substring(0, 498) : Description,
                     Interface = Interface.Length > 50 ? Interface.Substring(0, 48) : Interface,
-                    Application = "BIPL_RAASTP2M",
+                    Application = "TBAppBackend",
                     eDate = DateTime.Now,
                     IPAddress = ""
                 };

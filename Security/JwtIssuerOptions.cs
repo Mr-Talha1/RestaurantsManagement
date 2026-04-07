@@ -1,6 +1,6 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 
-namespace BIPL_RAASTP2M.Security
+namespace TBAppBackend.Security
 {
     public class JwtIssuerOptions
     {

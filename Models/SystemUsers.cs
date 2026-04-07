@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BIPL_RAASTP2M.Models
+namespace TBAppBackend.Models
 {
     public class SystemUsers
     {

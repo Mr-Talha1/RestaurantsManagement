@@ -9,7 +9,7 @@
     }
   },
   "profiles": {
-    "BIPL_RAASTP2M": {
+    "TBAppBackend": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,

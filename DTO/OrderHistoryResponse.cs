@@ -1,4 +1,4 @@
-﻿namespace BIPL_RAASTP2M.DTO
+﻿namespace TBAppBackend.DTO
 {
     public class OrderHistoryResponse
     {

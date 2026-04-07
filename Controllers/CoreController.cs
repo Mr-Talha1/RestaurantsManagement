@@ -1,9 +1,9 @@
-﻿using BIPL_RAASTP2M.Data;
-using BIPL_RAASTP2M.DTO;
-using BIPL_RAASTP2M.Models;
-using BIPL_RAASTP2M.Repositories;
-using BIPL_RAASTP2M.Security;
-using BIPL_RAASTP2M.Services;
+﻿using TBAppBackend.Data;
+using TBAppBackend.DTO;
+using TBAppBackend.Models;
+using TBAppBackend.Repositories;
+using TBAppBackend.Security;
+using TBAppBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -20,7 +20,7 @@ using System.Security.Cryptography;
 using System.Threading.Channels;
 
 
-namespace BIPL_RAASTP2M.Controllers
+namespace TBAppBackend.Controllers
 {
     [Route("api/")]
     [ApiController]

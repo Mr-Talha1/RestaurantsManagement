@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BIPL_RAASTP2M.DTO
+namespace TBAppBackend.DTO
 {
     public class EditOrderRequest
     {
