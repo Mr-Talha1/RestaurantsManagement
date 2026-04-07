@@ -460,6 +460,7 @@ namespace TBAppBackend.Repositories
                 {
                     Id = o.Id,
                     OrderNumber = o.OrderNumber,
+                    InvoiceId = o.InvoiceId,
                     OrderType = o.OrderType,
                     OrderDate = o.OrderDate,
                     TotalAmount = o.TotalAmount,

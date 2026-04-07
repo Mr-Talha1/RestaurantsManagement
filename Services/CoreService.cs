@@ -1202,6 +1202,7 @@ namespace TBAppBackend.Services
                     TotalDiscount = totalDiscountAll,
                     ItemsCount = itemCount,
                     OrderNumber = model.OrderNumber,
+                    InvoiceId = model.InvoiceId,
                     PaymentType = model.PaymentType,
                     OrderDate = orderDate,
                     CreatedAt = DateTime.Now,

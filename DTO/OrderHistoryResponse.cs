@@ -4,6 +4,7 @@
     {
         public long Id { get; set; }
         public long OrderNumber { get; set; }
+        public long InvoiceId { get; set; }
         public string OrderType { get; set; }
         public DateTime? OrderDate { get; set; }
         public decimal? GrossTotal { get; set; }

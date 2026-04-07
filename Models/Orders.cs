@@ -9,6 +9,7 @@ namespace TBAppBackend.Models
         public long MerchantId { get; set; }
         public string? UserId { get; set; }
         public long OrderNumber { get; set; }
+        public long InvoiceId { get; set; }
         public string OrderType { get; set; }
         public int? TableId { get; set; }
         public string PaymentType { get; set; }
