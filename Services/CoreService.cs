@@ -292,7 +292,8 @@ namespace TBAppBackend.Services
                         BusinessName = GetMerchnat.Name,
                         BusinessAddress = GetMerchnat.Address,
                         BusinessMobileNumber = GetMerchnat.MobileNumber,
-                        LogoPath = GetMerchnat.LogoPath
+                        LogoPath = GetMerchnat.LogoPath,
+                        BusinessType = GetMerchnat.BusinessType
                     },
                    Token = await _jwtFactory.LoginToken(GetUser.Role,GetUser.UserID, GetMerchnat.Id.ToString())
                 };

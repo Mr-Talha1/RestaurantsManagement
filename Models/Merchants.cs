@@ -14,6 +14,7 @@ namespace TBAppBackend.Models
         public string? Website { get; set; }
         public string? MobileNumber { get; set; }
         public string? LogoPath { get; set; }
+        public string? BusinessType { get; set; }
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
