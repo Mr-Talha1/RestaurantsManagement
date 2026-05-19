@@ -18,6 +18,9 @@ namespace TBAppBackend.Data
         public DbSet<OrderItems> OrderItems { get; set; }
         public DbSet<Customers> Customers { get; set; }
         public DbSet<WebsiteConfig> WebsiteConfigs { get; set; }
+        public DbSet<Branches> Branches { get; set; }
+        public DbSet<UserRoles> UserRoles { get; set; }
+        public DbSet<City> City { get; set; }
        
     }
 

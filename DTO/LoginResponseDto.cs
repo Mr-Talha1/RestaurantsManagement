@@ -18,5 +18,6 @@
         public string? BusinessMobileNumber { get; set; }
         public string? LogoPath { get; set; }
         public string? BusinessType { get; set; }
+        public string? BranchName { get; set; }
     }
 }

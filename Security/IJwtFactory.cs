@@ -11,7 +11,7 @@ using System.Threading.Tasks;
     {
         //Task<string> GenerateEncodedToken(SMSystemUsers smsystemUsers); 
         //Task<string> LoginToken(SMSystemUsers userLogin);
-        Task<string> LoginToken(string Role, string UserID, string MerchantId);
+        Task<string> LoginToken(string Role, string UserID, string MerchantId, string BranchId);
         //Task<string> LoginAffiliateToken(SMSystemUsers userLogin);
         Task<getTokenDetails> ValidateJwtToken(string Token);
         Task<string> GetMobileNo(string token);

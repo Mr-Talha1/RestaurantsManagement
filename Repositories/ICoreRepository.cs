@@ -51,5 +51,15 @@ namespace TBAppBackend.Repositories
         Task<bool> GetDiningTableByNameAsync(string name, long merchantId);
         Task<Customers> GetCustomersbyCustomerId(long merchantId, long CustomerId);
         Task<bool> UpdatCustomersAsync(Customers customers);
+        Task<List<City>> GetCityList();
+        Task<List<Branches>> GetBranchesByName(BranchDto branchDto, long MerchantId);
+        Task<bool> AddBranch(Branches Branches);
+        Task<SystemUsers> GetUserByUserIdAsync(string UserID);
+        Task<List<UserRoles>> GetUserRolesList();
+        Task<bool> AddUserAsync(SystemUsers User);
+        Task<List<Branches>> GetBranchesList(long MerchantId);
+        Task<UserRoles> GetRoleById(int Id);
+        Task<Branches> GetBranchById(int Id);
+        Task<List<Branches>> GetBranchesListById(int Id);
     }
 }

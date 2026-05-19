@@ -247,6 +247,31 @@ namespace TBAppBackend.Services
                         ResponseMessage = "InActive Merchant"
                     };
                 }
+
+                var GetUserRole = await _coreRepository.GetRoleById(GetUser.RoleId);
+                if (GetUserRole.Id == 0)
+                {
+                    await LogWrite("LoginServiceAsync", "User Role Not Found", "CoreService:LoginServiceAsync", model.UserId ?? "System");
+
+                    return new DefaultResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "User Role Not Found"
+                    };
+                }
+
+                var GetBranch = await _coreRepository.GetBranchById(GetUser.BranchId);
+                if (GetBranch.Id == 0)
+                {
+                    await LogWrite("LoginServiceAsync", "Branch Not Found", "CoreService:LoginServiceAsync", model.UserId ?? "System");
+
+                    return new DefaultResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "Branch Not Found"
+                    };
+                }
+
                 // Step-1: User exists, PIN not entered
                 if (string.IsNullOrEmpty(model.Password))
                 {
@@ -287,15 +312,16 @@ namespace TBAppBackend.Services
                     {
                         UserId = GetUser.UserID,
                         FullName = GetUser.FullName,
-                        Role = GetUser.Role,
+                        Role = GetUserRole.Role,
                         MerchantId = GetMerchnat.Id,
                         BusinessName = GetMerchnat.Name,
                         BusinessAddress = GetMerchnat.Address,
                         BusinessMobileNumber = GetMerchnat.MobileNumber,
                         LogoPath = GetMerchnat.LogoPath,
-                        BusinessType = GetMerchnat.BusinessType
+                        BusinessType = GetMerchnat.BusinessType,
+                        BranchName = GetBranch.BranchName
                     },
-                   Token = await _jwtFactory.LoginToken(GetUser.Role,GetUser.UserID, GetMerchnat.Id.ToString())
+                   Token = await _jwtFactory.LoginToken(GetUserRole.Role,GetUser.UserID, GetMerchnat.Id.ToString(), GetBranch.Id.ToString())
                 };
             }
             catch (Exception ex)
@@ -617,7 +643,7 @@ namespace TBAppBackend.Services
                     ImagePath = imageUrl,
                     ImagePublicId = imagePublicId,
                     IsDeleted = false,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
 
                 var added = await _coreRepository.AddProductAsync(product);
@@ -1075,7 +1101,7 @@ namespace TBAppBackend.Services
 
                 var orderItems = new List<OrderItems>();
 
-                DateTime? orderDate = model.OrderDate != default ? model.OrderDate : DateTime.UtcNow;
+                DateTime? orderDate = model.OrderDate != default ? model.OrderDate : DateTime.Now;
 
                 // ========================
                 // VALIDATE EACH PRODUCT (item-level calculation)
@@ -1357,7 +1383,7 @@ namespace TBAppBackend.Services
                     };
                 }
                 order.IsRefunded = true;
-                order.RefundedAt = DateTime.UtcNow;
+                order.RefundedAt = DateTime.Now;
                 order.RefundedBy = userId;
 
                 bool updated = await _coreRepository.UpdateOrderAsync(order);
@@ -1660,7 +1686,7 @@ namespace TBAppBackend.Services
                 // 7. Update tracking fields - FIXED
                 existingOrder.IsEdited = true;
                 existingOrder.EditedBy = userId;
-                existingOrder.EditedAt = DateTime.UtcNow;
+                existingOrder.EditedAt = DateTime.Now;
                 existingOrder.EditCount = existingOrder.EditCount + 1; // ✅ FIXED - no null coalescing needed
 
                 // 8. Save changes
@@ -1917,6 +1943,137 @@ namespace TBAppBackend.Services
                 return new MenuResponseDto();
             }
         }
+
+        public async Task<List<City>> GetCityListService()
+        {
+            try
+            {
+                return await _coreRepository.GetCityList();
+            }
+            catch (Exception ex)
+            {
+                return new List<City>();
+            }
+        }
+        public async Task<List<Branches>> GetBranchesByNameService(BranchDto branchDto, long MerchantId)
+        {
+            try
+            {
+                return await _coreRepository.GetBranchesByName(branchDto, MerchantId);
+            }
+            catch (Exception ex)
+            {
+                return new List<Branches>();
+            }
+        }
+
+        public async Task<bool> AddBranchService(BranchDto branchDto, long MerchantId)
+        {
+            try
+            {
+
+                var SMBranches = new Branches
+                {
+                    BranchName = branchDto.BranchName,
+                    Address = branchDto.Address,
+                    CityID = branchDto.CityID,
+                    Active = branchDto.Active,
+                    CreationDate = DateTime.Now,
+                    MerchantId = MerchantId,
+
+
+                };
+                return await _coreRepository.AddBranch(SMBranches);
+            }
+            catch (Exception ex)
+            {
+                await LogWrite("AddBranchService", "Error: " + ex.Message,"CoreService.cs - AddBranchService", MerchantId.ToString());
+                return false;
+            }
+        }
+
+        public async Task<SystemUsers> GetUserByUserIdService(string UserID)
+        {
+            try
+            {
+
+                return await _coreRepository.GetUserByUserIdAsync(UserID);
+
+
+            }
+            catch (Exception ex)
+            {
+
+                await LogWrite("Error-GetUserByUserIdService",ex.Message, "coreRepository.cs-GetUserByUserIdService", "System");
+                return null;
+            }
+        }
+        public async Task<List<UserRoles>> GetUserRolesListService()
+        {
+            try
+            {
+                return await _coreRepository.GetUserRolesList();
+            }
+            catch (Exception ex)
+            {
+                return new List<UserRoles>();
+            }
+        }
+        public async Task<bool> AddUserAsync(AddBranchUserDto addBranchUserDto, long MerchantId)
+        {
+            try
+            {
+
+                //string pwd = string.Empty;
+                //pwd = addMerchantUser.MPIN.ToString().Trim();
+                //pwd = Decrypt(pwd);
+                //pwd = CalculateMD5Hash(pwd);
+                //addBranchUserDto.MPIN = pwd;
+
+                var User = new SystemUsers
+                {
+                    MerchantId = MerchantId,
+                    MobileNumber = addBranchUserDto.MobileNumber,
+                    UserID = addBranchUserDto.UserID,
+                    FullName = addBranchUserDto.FullName,
+                    PasswordHash = addBranchUserDto.Password,
+                    IsActive = addBranchUserDto.Active,
+                    Email = addBranchUserDto.Email,
+                    CreatedAt = DateTime.Now,
+                    BranchId = addBranchUserDto.BranchId,
+                    RoleId = addBranchUserDto.RoleId
+                };
+
+                return await _coreRepository.AddUserAsync(User);
+            }
+            catch (Exception ex)
+            {
+
+                return false;
+            }
+        }
+        public async Task<List<Branches>> GetBranchesListService(long MerchantId, string Role, int BranchId)
+        {
+            try
+            {
+                if(Role == "MerchantAdmin")
+                {
+
+                    return await _coreRepository.GetBranchesList(MerchantId);
+                }
+                else
+                {
+                    return await _coreRepository.GetBranchesListById(BranchId);
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return new List<Branches>();
+            }
+        }
+
     }
 }
 

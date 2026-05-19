@@ -36,6 +36,13 @@ namespace TBAppBackend.Services
         Task<WebsiteConfigResponseDto?> GetWebsiteConfigByMerchantIdAsync(long merchantId);
         Task<DefaultResponse> UpdateWebsiteConfigAsync(long merchantId, UpdateWebsiteConfigDto updateDto);
         Task<MenuResponseDto> GetMenuBySubdomainAsync(string subdomain);
+        Task<List<City>> GetCityListService();
+        Task<List<Branches>> GetBranchesByNameService(BranchDto branchDto, long MerchantId);
+        Task<bool> AddBranchService(BranchDto branchDto, long MerchantId);
+        Task<SystemUsers> GetUserByUserIdService(string UserID);
+        Task<List<UserRoles>> GetUserRolesListService();
+        Task<bool> AddUserAsync(AddBranchUserDto addBranchUserDto, long MerchantId);
+        Task<List<Branches>> GetBranchesListService(long MerchantId, string Role, int BranchId);
 
     }
 }

@@ -1220,5 +1220,185 @@ namespace TBAppBackend.Repositories
                 return new MenuResponseDto();
             }
         }
+        public async Task<List<City>> GetCityList()
+        {
+            try
+            {
+                var result = await _appDbContext.City.ToListAsync();
+
+                if (result == null || result.Count == 0)
+                {
+                    return new List<City>();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetCityList", ex.Message, "CoreRepository.cs - GetCityList", "System");
+
+                return new List<City>();
+            }
+        }
+        public async Task<List<Branches>> GetBranchesByName(BranchDto branchDto,long MerchantId)
+        {
+            try
+            {
+                var result = await _appDbContext.Branches.Where(d => d.BranchName == branchDto.BranchName && d.MerchantId == MerchantId).ToListAsync();
+
+                if (result == null || result.Count == 0)
+                {
+                    return new List<Branches>(); // Return empty list if nothing found
+                }
+
+                return result;
+            }
+            catch (WebException ex)
+            {
+                await LogWriteAsync("Error-GetBranches", " Error: " + ex.Message, "CoreRepository.cs - GetBranchesByName", MerchantId.ToString());
+
+                return null; // Return empty list on exception
+            }
+        }
+
+        public async Task<bool> AddBranch(Branches Branches)
+        {
+            try
+            {
+                await _appDbContext.Branches.AddAsync(Branches);
+                return (await _appDbContext.SaveChangesAsync()) > 0;
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-AddBranch", ex.Message, "CoreRepository.cs - AddBranch", Branches.MerchantId.ToString());
+                return false;
+            }
+        }
+
+        public async Task<SystemUsers> GetUserByUserIdAsync(string UserID)
+        {
+            try
+            {
+
+                return await _appDbContext.SystemUsers
+                    .FirstOrDefaultAsync(d => d.UserID == UserID) ?? new SystemUsers();
+
+
+            }
+            catch (Exception ex)
+            {
+
+                await LogWriteAsync("GetUserByUserIdAsync",  ex.Message, "CoreRepository.cs - GetUserByUserIdAsync", "System");
+                return null;
+            }
+        }
+        public async Task<List<UserRoles>> GetUserRolesList()
+        {
+            try
+            {
+                var result = await _appDbContext.UserRoles.Where(x => x.Active == true).ToListAsync();
+
+                if (result == null || result.Count == 0)
+                {
+                    return new List<UserRoles>();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetUserRolesList", ex.Message, "CoreRepository.cs - GetUserRolesList", "System");
+
+                return new List<UserRoles>();
+            }
+        }
+
+        public async Task<bool> AddUserAsync(SystemUsers User)
+        {
+            try
+            {
+                await _appDbContext.SystemUsers.AddAsync(User);
+                return (await _appDbContext.SaveChangesAsync()) > 0;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+        public async Task<List<Branches>> GetBranchesList(long MerchantId)
+        {
+            try
+            {
+                var result = await _appDbContext.Branches.Where(x => x.MerchantId == MerchantId)
+                    .ToListAsync();
+
+                if (result == null || result.Count == 0)
+                {
+                    return new List<Branches>();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetBranchesList",  ex.Message, "CoreRepository.cs - GetBranchesList", "System");
+
+                return new List<Branches>();
+            }
+        }
+
+        public async Task<UserRoles> GetRoleById(int Id)
+        {
+            try
+            {
+                var result = await _appDbContext.UserRoles.FirstOrDefaultAsync(x => x.Id == Id) ?? new UserRoles();
+           
+                return result;
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetRoleById", ex.Message, "CoreRepository.cs - GetRoleById", "System");
+
+                return new UserRoles();
+            }
+        }
+
+        public async Task<Branches> GetBranchById(int Id)
+        {
+            try
+            {
+                var result = await _appDbContext.Branches.FirstOrDefaultAsync(x => x.Id == Id) ?? new Branches();
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetBranchById", ex.Message, "CoreRepository.cs - GetBranchById", "System");
+
+                return new Branches();
+            }
+        }
+
+        public async Task<List<Branches>> GetBranchesListById(int Id)
+        {
+            try
+            {
+                var result = await _appDbContext.Branches.Where(x => x.Id == Id)
+                    .ToListAsync();
+
+                if (result == null || result.Count == 0)
+                {
+                    return new List<Branches>();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetBranchesListById", ex.Message, "CoreRepository.cs - GetBranchesListById", "System");
+
+                return new List<Branches>();
+            }
+        }
     }
 }

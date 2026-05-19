@@ -897,6 +897,336 @@ namespace TBAppBackend.Controllers
                 });
             }
         }
+
+        // ===============  Branch work
+
+        //GetCity
+        [HttpGet("GetCity")]
+        [Authorize]
+        public async Task<IActionResult> GetCity()
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState.Values.SelectMany(v => v.Errors).Select(error => error.ErrorMessage));
+            }
+            try
+            {
+
+                var token = HttpContext.Request.Headers["Authorization"];
+                token = token.ToString().Replace("Bearer ", "");
+
+                var tokenData = await _jwtFactory.ValidateJwtToken(token);
+
+                if (tokenData == null || tokenData.MerchantId <= 0)
+                {
+                    return Ok(new DefaultResponse
+                    {
+                        ResponseCode = "04",
+                        ResponseMessage = "user is unauthorized",
+                    });
+                }
+
+                var GetRole = await _coreService.GetCityListService();
+
+
+                var response = new
+                {
+                    ResponseCode = "00",
+                    CityList = GetRole
+
+
+                };
+                return Ok(response);
+
+            }
+            catch (WebException ex)
+            {
+
+                var response = new DefaultResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "service fail",
+
+                };
+                return Ok(response);
+            }
+
+
+        }
+
+        //AddBranch
+        [HttpPost("AddBranch")]
+        [Authorize]
+        public async Task<IActionResult> AddBranch(BranchDto branchDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState.Values.SelectMany(v => v.Errors).Select(error => error.ErrorMessage));
+            }
+            try
+            {
+                var token = HttpContext.Request.Headers["Authorization"];
+                token = token.ToString().Replace("Bearer ", "");
+
+                var tokenData = await _jwtFactory.ValidateJwtToken(token);
+
+                if (tokenData == null || tokenData.MerchantId <= 0)
+                {
+                    return Ok(new DefaultResponse
+                    {
+                        ResponseCode = "04",
+                        ResponseMessage = "user is unauthorized",
+                    });
+                }
+
+                    var checkLocationExist = await _coreService.GetBranchesByNameService(branchDto, tokenData.MerchantId);
+                    if (checkLocationExist.Count == 0)
+                    {
+                        var result = await _coreService.AddBranchService(branchDto, tokenData.MerchantId);
+
+                        if (result == true)
+                        {
+                            var response = new DefaultResponse
+                            {
+                                ResponseCode = "00",
+                                ResponseMessage = "Branches Added Successfully"
+
+
+                            };
+                            return Ok(response);
+                        }
+                        else
+                        {
+                            var response = new DefaultResponse
+                            {
+                                ResponseCode = "01",
+                                ResponseMessage = "Some Thing Went Wrong Please Try Again Later"
+
+
+                            };
+                            return Ok(response);
+                        }
+
+                    }
+                    else
+                    {
+                        var response = new DefaultResponse
+                        {
+                            ResponseCode = "01",
+                            ResponseMessage = "BranchName Already Exist"
+
+
+                        };
+                        return Ok(response);
+
+                    }
+
+            }
+            catch (WebException ex)
+            {
+                await _coreService.LogWrite("Error-AddBranch", ex.Message, "CoreController:AddBranch", "System");
+
+                var response = new DefaultResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "Service Fail",
+
+                };
+                return Ok(response);
+            }
+
+
+        }
+
+        //GetUserRoles
+        [HttpGet("GetUserRoles")]
+        [Authorize]
+        public async Task<IActionResult> GetUserRoles()
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState.Values.SelectMany(v => v.Errors).Select(error => error.ErrorMessage));
+            }
+            try
+            {
+
+                var token = HttpContext.Request.Headers["Authorization"];
+                token = token.ToString().Replace("Bearer ", "");
+
+                var tokenData = await _jwtFactory.ValidateJwtToken(token);
+
+                if (tokenData == null || tokenData.MerchantId <= 0)
+                {
+                    return Ok(new DefaultResponse
+                    {
+                        ResponseCode = "04",
+                        ResponseMessage = "user is unauthorized",
+                    });
+                }
+
+                var GetRole = await _coreService.GetUserRolesListService();
+
+
+                var response = new
+                {
+                    ResponseCode = "00",
+                    RoleList = GetRole
+
+
+                };
+                return Ok(response);
+
+            }
+            catch (WebException ex)
+            {
+
+                var response = new DefaultResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "service fail",
+
+                };
+                return Ok(response);
+            }
+
+
+        }
+
+        //AddBranchUser
+        [HttpPost("AddBranchUser")]
+        [Authorize]
+        public async Task<IActionResult> AddBranchUser(AddBranchUserDto addBranchUserDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState.Values.SelectMany(v => v.Errors).Select(error => error.ErrorMessage));
+            }
+            try
+            {
+                var token = HttpContext.Request.Headers["Authorization"];
+                token = token.ToString().Replace("Bearer ", "");
+
+                var tokenData = await _jwtFactory.ValidateJwtToken(token);
+
+                if (tokenData == null || tokenData.MerchantId <= 0)
+                {
+                    return Ok(new DefaultResponse
+                    {
+                        ResponseCode = "04",
+                        ResponseMessage = "user is unauthorized",
+                    });
+                }
+
+                addBranchUserDto.UserID = addBranchUserDto.UserID.Trim();
+
+                    var checkUserExist = await _coreService.GetUserByUserIdService(addBranchUserDto.UserID);
+
+                    if (!string.IsNullOrEmpty(checkUserExist.UserID))
+                    {
+                        var response = new DefaultResponse
+                        {
+                            ResponseCode = "01",
+                            ResponseMessage = "UserId already exist"
+                        };
+                        return Ok(response);
+                    }
+
+
+                    var result = await _coreService.AddUserAsync(addBranchUserDto, tokenData.MerchantId);
+
+                    if (result == true)
+                    {
+                        var response = new DefaultResponse
+                        {
+                            ResponseCode = "00",
+                            ResponseMessage = "User Added Successfully"
+
+
+                        };
+                        return Ok(response);
+                    }
+                    else
+                    {
+                        var response = new DefaultResponse
+                        {
+                            ResponseCode = "01",
+                            ResponseMessage = "Some Thing Went Wrong Please Try Again Later"
+
+
+                        };
+                        return Ok(response);
+                    }
+              
+
+            }
+            catch (WebException ex)
+            {
+                await _coreService.LogWrite("Error-AddBranchUser", ex.Message, "CoreController:AddBranchUser", "System");
+                var response = new DefaultResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "Service Fail",
+
+                };
+                return Ok(response);
+            }
+
+
+        }
+
+        //GetBranches
+        [HttpGet("GetBranches")]
+        [Authorize]
+        public async Task<IActionResult> GetSMBranches()
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState.Values.SelectMany(v => v.Errors).Select(error => error.ErrorMessage));
+            }
+            try
+            {
+
+                var token = HttpContext.Request.Headers["Authorization"];
+                token = token.ToString().Replace("Bearer ", "");
+
+                var tokenData = await _jwtFactory.ValidateJwtToken(token);
+
+                if (tokenData == null || tokenData.MerchantId <= 0)
+                {
+                    return Ok(new DefaultResponse
+                    {
+                        ResponseCode = "04",
+                        ResponseMessage = "user is unauthorized",
+                    });
+                }
+
+                var GetBranches = await _coreService.GetBranchesListService(tokenData.MerchantId, tokenData.Role, tokenData.BranchId);
+
+
+                    var response = new
+                    {
+                        ResponseCode = "00",
+                        BranchList = GetBranches
+
+
+                    };
+                    return Ok(response);
+            
+            }
+            catch (WebException ex)
+            {
+
+                var response = new DefaultResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "service fail",
+
+                };
+                return Ok(response);
+            }
+
+
+        }
     }
 
 }

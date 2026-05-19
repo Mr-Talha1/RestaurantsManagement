@@ -10,5 +10,6 @@ namespace TBAppBackend.Security
         public string Role { get; set; }
         public string UserID { get; set; }
         public long MerchantId { get; set; }
+        public int BranchId { get; set; }
     }
 }
