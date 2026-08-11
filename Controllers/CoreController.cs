@@ -1227,6 +1227,60 @@ namespace TBAppBackend.Controllers
 
 
         }
+
+        //-- Get Branch With Users
+        [HttpGet("GetBranchWithUsers")]
+        [Authorize]
+        public async Task<IActionResult> GetBranchWithUsers(int BranchId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState.Values
+                                         .SelectMany(v => v.Errors)
+                                         .Select(error => error.ErrorMessage));
+            }
+            try
+            {
+                var token = HttpContext.Request.Headers["Authorization"]
+                                        .ToString()
+                                        .Replace("Bearer ", "");
+                var getTokenDetails = await _jwtFactory.ValidateJwtToken(token);
+
+                if (getTokenDetails == null)
+                {
+                    return Ok(new
+                    {
+                        ResponseCode = "04",
+                        ResponseMessage = "Unauthorized"
+                    });
+                }
+
+
+                long merchantId = getTokenDetails.MerchantId;
+                string role = getTokenDetails.Role;
+                int? userLocationId = role == "BusinessAdmin" ? null : BranchId;
+                var LocationUser = await _coreService.GetLocationsWithUsersAsync(merchantId, role, userLocationId);
+
+
+                var response = new
+                {
+                    ResponseCode = "00",
+                    Data = LocationUser
+                };
+                return Ok(response);
+            }
+            catch (System.Exception ex)
+            {
+
+                await _coreService.LogWrite("GetBranchWithUsers ", ex.Message, "CoreController:GetBranchWithUsers","");
+
+                return Ok(new
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "Service Failed"
+                });
+            }
+        }
     }
 
 }

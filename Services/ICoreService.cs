@@ -43,7 +43,7 @@ namespace TBAppBackend.Services
         Task<List<UserRoles>> GetUserRolesListService();
         Task<bool> AddUserAsync(AddBranchUserDto addBranchUserDto, long MerchantId);
         Task<List<Branches>> GetBranchesListService(long MerchantId, string Role, int BranchId);
-
+        Task<List<BranchUsersDto>> GetLocationsWithUsersAsync(long merchantId, string role, int? userLocationId);
     }
 }
 

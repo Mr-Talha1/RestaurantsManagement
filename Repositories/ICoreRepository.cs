@@ -61,5 +61,8 @@ namespace TBAppBackend.Repositories
         Task<UserRoles> GetRoleById(int Id);
         Task<Branches> GetBranchById(int Id);
         Task<List<Branches>> GetBranchesListById(int Id);
+        Task<List<Branches>> GetLocationsByMerchantAsync(long MerchantId);
+        Task<List<Branches>> GetLocationsByBranchCodesAsync(List<int> branchIds);
+        Task<List<SystemUsers>> GetUsersByMerchantAsync(long merchantId, string role, int? userLocationId);
     }
 }

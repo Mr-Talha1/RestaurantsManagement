@@ -19,5 +19,6 @@
         public string? LogoPath { get; set; }
         public string? BusinessType { get; set; }
         public string? BranchName { get; set; }
+        public int? BranchId { get; set; }
     }
 }

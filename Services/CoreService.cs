@@ -319,7 +319,8 @@ namespace TBAppBackend.Services
                         BusinessMobileNumber = GetMerchnat.MobileNumber,
                         LogoPath = GetMerchnat.LogoPath,
                         BusinessType = GetMerchnat.BusinessType,
-                        BranchName = GetBranch.BranchName
+                        BranchName = GetBranch.BranchName,
+                        BranchId = GetUser.BranchId,
                     },
                    Token = await _jwtFactory.LoginToken(GetUserRole.Role,GetUser.UserID, GetMerchnat.Id.ToString(), GetBranch.Id.ToString())
                 };
@@ -2056,7 +2057,7 @@ namespace TBAppBackend.Services
         {
             try
             {
-                if(Role == "MerchantAdmin")
+                if(Role == "BusinessAdmin")
                 {
 
                     return await _coreRepository.GetBranchesList(MerchantId);
@@ -2074,6 +2075,82 @@ namespace TBAppBackend.Services
             }
         }
 
+        public async Task<List<BranchUsersDto>> GetLocationsWithUsersAsync(long merchantId, string role, int? userLocationId)
+        {
+            try
+            {
+                List<Branches> branchs;
+
+                // 1) Role location filter
+                if (role == "BusinessAdmin")
+                {
+                    // BusinessAdmin: sab locations
+                    branchs = await _coreRepository.GetLocationsByMerchantAsync(merchantId);
+                }
+                else
+                {
+                    // LocationAdmin/User: sirf apni assigned location
+                    if (userLocationId.HasValue)
+                    {
+                        // ek single location ko list me lao
+                        branchs = await _coreRepository.GetLocationsByBranchCodesAsync(new List<int> { userLocationId.Value });
+                    }
+                    else
+                    {
+                        branchs = new List<Branches>();
+                    }
+                }
+
+                // 2) Agar koi location na mile to empty return
+                if (branchs == null || !branchs.Any())
+                {
+                    return new List<BranchUsersDto>();
+                }
+
+                // 3) Us merchant ke sab users lo
+                var users = await _coreRepository.GetUsersByMerchantAsync(merchantId, role, userLocationId);
+
+                var result = new List<BranchUsersDto>();
+
+                // 4) Har location ke liye users filter karke DTO banao
+                foreach (var location in branchs)
+                {
+                    // Ab BranchCode string hai, isliye location.BranchCode use karenge
+                    var usersInLocation = users
+                        .Where(u => u.BranchId == location.Id)
+                        .Select(u => new UserDto
+                        {
+                            Id = u.Id,
+                            UserId = u.UserID,
+                            UserRole = "",
+                            FullName = u.FullName,
+                            MobileNumber = u.MobileNumber,
+                            Email = u.Email,
+                            CreationDate = u.CreatedAt.ToString("dd-MM-yyyy"),
+                            Active = u.IsActive
+                        })
+                        .ToList();
+
+                    result.Add(new BranchUsersDto
+                    {
+                        BranchId = location.Id, 
+                        BranchName = location.BranchName,
+                        Address = location.Address,
+                        Active = location.Active,
+                        CityID = location.CityID,
+                        CreationDate = location.CreationDate?.ToString("dd-MM-yyyy"),
+                        Users = usersInLocation
+                    });
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                await LogWrite("Error", ex.Message, "GetLocationsWithUsersAsync", merchantId.ToString());
+                throw;
+            }
+        }
     }
 }
 

@@ -1400,5 +1400,52 @@ namespace TBAppBackend.Repositories
                 return new List<Branches>();
             }
         }
+
+        public async Task<List<Branches>> GetLocationsByMerchantAsync(long MerchantId)
+        {
+            return await _appDbContext.Branches
+                .Where(l => l.MerchantId == MerchantId)
+                .ToListAsync();
+        }
+        public async Task<List<Branches>> GetLocationsByBranchCodesAsync(List<int> branchIds)
+        {
+            try
+            {
+                return await _appDbContext.Branches
+                                     .Where(l => branchIds.Contains(l.Id))
+                                     .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("GetLocationsByBranchCodesAsync", " Error: " + ex.Message,
+                                   "CoreRepository.cs - GetLocationsByBranchCodesAsync", "");
+                throw;
+            }
+        }
+
+        public async Task<List<SystemUsers>> GetUsersByMerchantAsync(long merchantId, string role, int? userLocationId)
+        {
+            try
+            {
+                // Base query: MerchantID match karna hai
+                var query = _appDbContext.SystemUsers
+                    .Where(u => u.MerchantId == merchantId && u.BranchId != null);
+
+                // Role-based filter:
+                if (role != "BusinessAdmin" && userLocationId.HasValue)
+                {
+                    // LocationAdmin/User: sirf apni assigned LocationID
+                    query = query.Where(u => u.BranchId == userLocationId.Value);
+                }
+
+                // Sirf LocationAdmin/User or all for BusinessAdmin
+                return await query.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("GetUsersByMerchantAsync"," Error: " + ex.Message, "CoreRepository.cs - GetUsersByMerchantAsync", merchantId.ToString());
+                throw;
+            }
+        }
     }
 }
