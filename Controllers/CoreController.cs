@@ -558,12 +558,12 @@ namespace TBAppBackend.Controllers
                 //long merchantId = GetMerchantIdFromToken();
             //int userId = GetUserIdFromToken();
 
-            var response = await _coreService.AddOrderAsync(model, tokenData.MerchantId, UserID);
+            var response = await _coreService.AddOrderAsync(model, tokenData.MerchantId, UserID, tokenData.BranchId);
             return Ok(response);
             }
             catch (Exception ex)
             {
-                await _coreService.LogWrite("Error-DeleteProduct", ex.Message, "CoreController:DeleteProduct", UserID ?? "System");
+                await _coreService.LogWrite("Error-AddOrder", ex.Message, "CoreController:AddOrder", UserID ?? "System");
                 return Ok(new DefaultResponse
                 {
                     ResponseCode = "05",

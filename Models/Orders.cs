@@ -30,6 +30,7 @@ namespace TBAppBackend.Models
         public string? TaxType { get; set; }         // "percentage" or "flat" - now optional
         public decimal? TaxValue { get; set; }        // 15 or 5 - now optional
         public decimal? TaxAmount { get; set; }
+        public int? BranchId { get; set; }
 
         // EDIT TRACKING FIELDS
         public bool IsEdited { get; set; } = false;

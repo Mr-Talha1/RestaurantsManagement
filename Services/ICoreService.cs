@@ -26,7 +26,7 @@ namespace TBAppBackend.Services
         Task<List<Products>> GetProductsService(long merchantId);
         Task<DefaultResponse> UpdateProductAsync(AddProductRequest model, long merchantId);
         Task<DefaultResponse> DeleteProductService(int productId, long merchantId);
-        Task<object> AddOrderAsync(AddOrderRequest model, long merchantId, string userId);
+        Task<object> AddOrderAsync(AddOrderRequest model, long merchantId, string userId,int BranchId);
         Task<object> GetOrderHistoryAsync(OrderHistoryRequest model, long merchantId);
         Task<object> SearchCustomersAsync(string query, long merchantId);
         Task<DefaultResponse> RefundOrderAsync(long OrderId, long merchantId, string userId);

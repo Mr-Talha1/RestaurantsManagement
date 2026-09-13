@@ -481,7 +481,7 @@ namespace TBAppBackend.Repositories
                     TaxType = o.TaxType,
                     TaxValue = o.TaxValue,
                     TaxAmount = o.TaxAmount,
-
+                    BranchId= o.BranchId,
                     Customer = customer,   // 👈 customer only when exists
                     Items = items
                 });

@@ -27,6 +27,7 @@
         // ORDER LEVEL DISCOUNT FIELDS (You already have these)
         public string? OrderDiscountType { get; set; }
         public decimal? OrderDiscountValue { get; set; }
+        public int? BranchId { get; set; }
 
         public List<OrderItemResponse> Items { get; set; }
         public CustomerResponse Customer { get; set; } // nullable

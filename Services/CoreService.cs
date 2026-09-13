@@ -1044,7 +1044,7 @@ namespace TBAppBackend.Services
         //        };
         //    }
         //}
-        public async Task<object> AddOrderAsync(AddOrderRequest model, long merchantId, string userId)
+        public async Task<object> AddOrderAsync(AddOrderRequest model, long merchantId, string userId,int BranchId)
         {
             try
             {
@@ -1241,7 +1241,8 @@ namespace TBAppBackend.Services
                     // TAX FIELDS - Now optional (will be null if no tax)
                     TaxType = !string.IsNullOrEmpty(model.TaxType) ? model.TaxType : null,
                     TaxValue = model.TaxValue,
-                    TaxAmount = taxAmount > 0 ? taxAmount : (decimal?)null
+                    TaxAmount = taxAmount > 0 ? taxAmount : (decimal?)null,
+                    BranchId=BranchId
                 };
 
                 long orderId = await _coreRepository.AddOrderAsync(newOrder);
@@ -1296,8 +1297,7 @@ namespace TBAppBackend.Services
                 var DateFrom = fromtime != null ? Convert.ToDateTime(FromDate + fromtime) : Convert.ToDateTime("1970-01-01 00:00:00.000");
                 var DateTo = totime != null ? Convert.ToDateTime(ToDate + totime) : now;
 
-                var list = await _coreRepository
-                    .GetOrderHistoryAsync(merchantId, DateFrom, DateTo);
+                var list = await _coreRepository.GetOrderHistoryAsync(merchantId, DateFrom, DateTo);
 
                 var TotalRevenue = list.Sum(x => x.TotalAmount);
 
