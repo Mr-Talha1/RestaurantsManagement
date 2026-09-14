@@ -82,12 +82,12 @@ namespace TBAppBackend.Repositories
             return await _appDbContext.Merchants.FirstOrDefaultAsync(x => x.Id == id) ?? new Merchants();
         }
 
-        public async Task<List<DiningTables>> GetDiningTables(long merchantId, string UserID)
+        public async Task<List<DiningTables>> GetDiningTables(long merchantId, string UserID,int BranchId)
         {
             try
             {
                 return await _appDbContext.DiningTables
-                    .Where(x => x.MerchantId == merchantId&&x.IsDeleted==false)
+                    .Where(x => x.MerchantId == merchantId && x.BranchId == BranchId && x.IsDeleted==false)
                     .ToListAsync();
             }
             catch (Exception ex)
@@ -97,10 +97,11 @@ namespace TBAppBackend.Repositories
                 return new List<DiningTables>();
             }
         }
-        public async Task<bool> GetDiningTableByNameAsync(string name, long merchantId)
+        public async Task<bool> GetDiningTableByNameAsync(string name, long merchantId,int BranchId)
         {
             return await _appDbContext.DiningTables.AnyAsync(p => p.MerchantId == merchantId
                                                     && p.Name == name
+                                                    && p.BranchId == BranchId
                                                     && p.IsDeleted == false);
         }
         public async Task<bool> AddDiningTableAsync(DiningTables table)
@@ -117,12 +118,12 @@ namespace TBAppBackend.Repositories
                 return false;
             }
         }
-        public async Task<bool> UpdateDiningTableAsync(DiningTableDto model,long MerchantId)
+        public async Task<bool> UpdateDiningTableAsync(DiningTableDto model,long MerchantId,int BranchId)
         {
             try
             {
                 var existing = await _appDbContext.DiningTables
-                                    .FirstOrDefaultAsync(x => x.Id == model.Id && x.MerchantId == MerchantId && x.IsDeleted == false);
+                                    .FirstOrDefaultAsync(x => x.Id == model.Id && x.MerchantId == MerchantId && x.BranchId == BranchId && x.IsDeleted == false);
 
                 if (existing == null)
                     return false;
@@ -140,12 +141,12 @@ namespace TBAppBackend.Repositories
             }
         }
 
-        public async Task<bool> DeleteDiningTableAsync(long id, long merchantId)
+        public async Task<bool> DeleteDiningTableAsync(int id, long merchantId,int BranchId)
         {
             try
             {
                 var table = await _appDbContext.DiningTables
-                    .FirstOrDefaultAsync(x => x.Id == id && x.MerchantId == merchantId && x.IsDeleted == false);
+                    .FirstOrDefaultAsync(x => x.Id == id && x.MerchantId == merchantId && x.BranchId == BranchId && x.IsDeleted == false);
 
                 if (table == null)
                     return false;

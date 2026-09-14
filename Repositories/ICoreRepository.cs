@@ -8,10 +8,10 @@ namespace TBAppBackend.Repositories
         Task LogWriteAsync(string Activity, string Description, string Interface,string UserID);
         Task<SystemUsers> GetSyestemUserByUserId(string UserID);
         Task<Merchants> GetMerchantById(long id);
-        Task<List<DiningTables>> GetDiningTables(long merchantId, string UserID);
+        Task<List<DiningTables>> GetDiningTables(long merchantId, string UserID ,int BranchId);
         Task<bool> AddDiningTableAsync(DiningTables table);
-        Task<bool> UpdateDiningTableAsync(DiningTableDto model, long MerchantId);
-        Task<bool> DeleteDiningTableAsync(long id, long merchantId);
+        Task<bool> UpdateDiningTableAsync(DiningTableDto model, long MerchantId,int BranchId);
+        Task<bool> DeleteDiningTableAsync(int id, long merchantId,int BranchId);
         Task<string> AddCategoryAsync(CategoryDto model, long merchantId);
         Task<Categories> GetCategoryId(int Id, long merchantId);
         Task<Categories> GetCategoryByName(string CategoryName, long merchantId);
@@ -48,7 +48,7 @@ namespace TBAppBackend.Repositories
         Task<bool> CreateDefaultWebsiteConfigAsync(WebsiteConfig config);
         Task<bool> UpdateWebsiteConfigAsync(WebsiteConfig config);
         Task<MenuResponseDto> GetMenuBySubdomainAsync(string subdomain);
-        Task<bool> GetDiningTableByNameAsync(string name, long merchantId);
+        Task<bool> GetDiningTableByNameAsync(string name, long merchantId,int BranchId);
         Task<Customers> GetCustomersbyCustomerId(long merchantId, long CustomerId);
         Task<bool> UpdatCustomersAsync(Customers customers);
         Task<List<City>> GetCityList();

@@ -89,7 +89,7 @@ namespace TBAppBackend.Controllers
                 UserID = tokenData.UserID;
 
                 // Call service
-                var result = await _coreService.GetDiningTablesService(tokenData.MerchantId, UserID);
+                var result = await _coreService.GetDiningTablesService(tokenData.MerchantId, UserID, tokenData.BranchId);
 
                 var response = new
                 {
@@ -133,6 +133,7 @@ namespace TBAppBackend.Controllers
                     UserID = tokenData.UserID;
 
                     long merchantId = tokenData.MerchantId;
+                    int BranchId = tokenData.BranchId;
 
                     // Validation
                     if (string.IsNullOrWhiteSpace(req.Name))
@@ -145,8 +146,8 @@ namespace TBAppBackend.Controllers
                     }
 
                     // Call service
-                    var result = await _coreService.AddDiningTableService(req, merchantId);
-                return Ok(result);
+                    var result = await _coreService.AddDiningTableService(req, merchantId, BranchId);
+                    return Ok(result);
                
 
                 }
@@ -179,7 +180,7 @@ namespace TBAppBackend.Controllers
                 });
             }
 
-            var response = await _coreService.UpdateDiningTableAsync(request, tokenData.MerchantId);
+            var response = await _coreService.UpdateDiningTableAsync(request, tokenData.MerchantId,tokenData.BranchId);
             return Ok(response);
             }
             catch (Exception ex)
@@ -211,7 +212,7 @@ namespace TBAppBackend.Controllers
                 });
             }
                 UserID = tokenData.UserID;
-            var result = await _coreService.DeleteDiningTableAsync(id, tokenData.MerchantId);
+            var result = await _coreService.DeleteDiningTableAsync(id, tokenData.MerchantId,tokenData.BranchId);
             return Ok(result);
             }
             catch (Exception ex)

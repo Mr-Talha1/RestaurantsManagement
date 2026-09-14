@@ -14,10 +14,10 @@ namespace TBAppBackend.Services
         public string CalculateMD5Hash(string cipherText);
         public Task LogWrite(string Activity, string Description, string Interface,string UserID);
         Task<dynamic> LoginServiceAsync(LoginRequestDto model);
-        Task<List<DiningTables>> GetDiningTablesService(long merchantId, string UserID);
-        Task<DefaultResponse> AddDiningTableService(DiningTableDto req, long merchantId);
-        Task<DefaultResponse> UpdateDiningTableAsync(DiningTableDto request, long MerchantId);
-        Task<DefaultResponse> DeleteDiningTableAsync(int id, long merchantId);
+        Task<List<DiningTables>> GetDiningTablesService(long merchantId, string UserID, int BranchId);
+        Task<DefaultResponse> AddDiningTableService(DiningTableDto req, long merchantId,int BranchId);
+        Task<DefaultResponse> UpdateDiningTableAsync(DiningTableDto request, long MerchantId,int BranchId);
+        Task<DefaultResponse> DeleteDiningTableAsync(int id, long merchantId,int BranchId);
         Task<DefaultResponse> AddCategoryService(CategoryDto model, long merchantId);
         Task<DefaultResponse> UpdateCategoryAsync(CategoryDto categoryDto, long merchantId);
         Task<List<Categories>> GetCategoryService(long merchantId);

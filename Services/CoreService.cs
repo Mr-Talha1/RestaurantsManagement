@@ -337,16 +337,16 @@ namespace TBAppBackend.Services
             }
         }
 
-        public async Task<List<DiningTables>> GetDiningTablesService(long merchantId,string UserID)
+        public async Task<List<DiningTables>> GetDiningTablesService(long merchantId,string UserID,int BranchId)
         {
-            return await _coreRepository.GetDiningTables(merchantId, UserID);
+            return await _coreRepository.GetDiningTables(merchantId, UserID, BranchId);
         }
-        public async Task<DefaultResponse> AddDiningTableService(DiningTableDto req, long merchantId)
+        public async Task<DefaultResponse> AddDiningTableService(DiningTableDto req, long merchantId,int BranchId)
         {
             try
             {
                 // duplicate name check
-                if (await _coreRepository.GetDiningTableByNameAsync(req.Name, merchantId))
+                if (await _coreRepository.GetDiningTableByNameAsync(req.Name, merchantId, BranchId))
                 {
                     return new DefaultResponse
                     {
@@ -360,6 +360,7 @@ namespace TBAppBackend.Services
                 MerchantId = merchantId,
                 Name = req.Name,
                 IsDeleted=false,
+                BranchId=BranchId,
                 CreatedAt = DateTime.Now
             };
 
@@ -394,11 +395,11 @@ namespace TBAppBackend.Services
 
             }
         }
-        public async Task<DefaultResponse> UpdateDiningTableAsync(DiningTableDto request,long MerchantId)
+        public async Task<DefaultResponse> UpdateDiningTableAsync(DiningTableDto request,long MerchantId,int BranchId)
         {
             try
             {
-                bool result = await _coreRepository.UpdateDiningTableAsync(request, MerchantId);
+                bool result = await _coreRepository.UpdateDiningTableAsync(request, MerchantId, BranchId);
 
                 if (!result)
                 {
@@ -412,7 +413,7 @@ namespace TBAppBackend.Services
                 return new DefaultResponse
                 {
                     ResponseCode = "00",
-                    ResponseMessage = "Dining Table Updated Successfully."
+                    ResponseMessage = "Table Updated Successfully."
                 };
             }
             catch (Exception ex)
@@ -426,11 +427,11 @@ namespace TBAppBackend.Services
                 };
             }
         }
-        public async Task<DefaultResponse> DeleteDiningTableAsync(int id, long merchantId)
+        public async Task<DefaultResponse> DeleteDiningTableAsync(int id, long merchantId,int BranchId)
         {
             try
             {
-                var deleted = await _coreRepository.DeleteDiningTableAsync(id, merchantId);
+                var deleted = await _coreRepository.DeleteDiningTableAsync(id, merchantId, BranchId);
 
                 if (!deleted)
                 {
