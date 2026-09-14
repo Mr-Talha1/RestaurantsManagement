@@ -42,8 +42,9 @@ namespace TBAppBackend.Services
         Task<SystemUsers> GetUserByUserIdService(string UserID);
         Task<List<UserRoles>> GetUserRolesListService();
         Task<bool> AddUserAsync(AddBranchUserDto addBranchUserDto, long MerchantId);
-        Task<List<Branches>> GetBranchesListService(long MerchantId, string Role, int BranchId);
+        Task<List<BranchListDto>> GetBranchesListService(long MerchantId, string Role, int BranchId);
         Task<List<BranchUsersDto>> GetLocationsWithUsersAsync(long merchantId, string role, int? userLocationId);
+        Task<DefaultResponse> EditBranchAsync(BranchDto dto, long merchantId);
     }
 }
 

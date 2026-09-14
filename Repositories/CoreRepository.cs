@@ -1325,7 +1325,7 @@ namespace TBAppBackend.Repositories
                 return false;
             }
         }
-        public async Task<List<Branches>> GetBranchesList(long MerchantId)
+        public async Task<List<Branches>> GetBranchesListbkold(long MerchantId)
         {
             try
             {
@@ -1378,8 +1378,22 @@ namespace TBAppBackend.Repositories
                 return new Branches();
             }
         }
+        public async Task<Branches> GetBranchByIdMerchantIdAsync(int BracnhId, long merchantId)
+        {
+            try
+            {
+                var result = await _appDbContext.Branches.FirstOrDefaultAsync(x => x.Id == BracnhId && x.MerchantId==merchantId);
 
-        public async Task<List<Branches>> GetBranchesListById(int Id)
+                return result;
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetBranchById", ex.Message, "CoreRepository.cs - GetBranchById", "System");
+
+                throw;
+            }
+        }
+        public async Task<List<Branches>> GetBranchesListByIdbkold(int Id)
         {
             try
             {
@@ -1445,6 +1459,71 @@ namespace TBAppBackend.Repositories
             {
                 await LogWriteAsync("GetUsersByMerchantAsync"," Error: " + ex.Message, "CoreRepository.cs - GetUsersByMerchantAsync", merchantId.ToString());
                 throw;
+            }
+        }
+
+        public async Task<List<BranchListDto>> GetBranchesList(long merchantId, string role,int branchId)
+        {
+            try
+            {
+                var query = _appDbContext.Branches.AsNoTracking();
+
+                if (role == "BusinessAdmin")
+                {
+                    return await query
+                        .Where(x => x.MerchantId == merchantId)
+                        .Select(x => new BranchListDto
+                        {
+                            Id = x.Id,
+                            BranchName = x.BranchName
+                        })
+                        .ToListAsync();
+                }
+
+                return await query
+                    .Where(x => x.Id == branchId && x.MerchantId == merchantId)
+                    .Select(x => new BranchListDto
+                    {
+                        Id = x.Id,
+                        BranchName = x.BranchName
+                    })
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetBranchesList",ex.Message,"CoreRepository.cs - GetBranchesList", "System");
+
+                return new List<BranchListDto>();
+            }
+        }
+        public async Task<Branches> GetBranchesByNameandMerchantId(string BranchName, long MerchantId)
+        {
+            try
+            {
+                var result = await _appDbContext.Branches.FirstOrDefaultAsync(d => d.BranchName == BranchName && d.MerchantId == MerchantId);
+
+
+                return result;
+            }
+            catch (WebException ex)
+            {
+                await LogWriteAsync("Error-GetBranchesByNameandMerchantId", " Error: " + ex.Message, "CoreRepository.cs - GetBranchesByNameandMerchantId", MerchantId.ToString());
+
+                return null; // Return empty list on exception
+            }
+        }
+
+        public async Task<bool> UpdateBranchAsync(Branches branches)
+        {
+            try
+            {
+                _appDbContext.Branches.Update(branches);
+                int result = await _appDbContext.SaveChangesAsync();
+                return result > 0;
+            }
+            catch
+            {
+                return false;
             }
         }
     }

@@ -4,6 +4,8 @@ namespace TBAppBackend.DTO
 {
     public class BranchDto
     {
+        public int? Id { get; set; }
+
         [Required]
         public string? BranchName { get; set; }
         [Required]

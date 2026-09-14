@@ -57,12 +57,14 @@ namespace TBAppBackend.Repositories
         Task<SystemUsers> GetUserByUserIdAsync(string UserID);
         Task<List<UserRoles>> GetUserRolesList();
         Task<bool> AddUserAsync(SystemUsers User);
-        Task<List<Branches>> GetBranchesList(long MerchantId);
         Task<UserRoles> GetRoleById(int Id);
         Task<Branches> GetBranchById(int Id);
-        Task<List<Branches>> GetBranchesListById(int Id);
         Task<List<Branches>> GetLocationsByMerchantAsync(long MerchantId);
         Task<List<Branches>> GetLocationsByBranchCodesAsync(List<int> branchIds);
         Task<List<SystemUsers>> GetUsersByMerchantAsync(long merchantId, string role, int? userLocationId);
+        Task<List<BranchListDto>> GetBranchesList(long merchantId, string role, int branchId);
+        Task<Branches> GetBranchByIdMerchantIdAsync(int BracnhId, long merchantId);
+        Task<Branches> GetBranchesByNameandMerchantId(string BranchName, long MerchantId);
+        Task<bool> UpdateBranchAsync(Branches branches);
     }
 }

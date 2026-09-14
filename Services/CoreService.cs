@@ -38,6 +38,7 @@ using TBAppBackend.Security;
 using System.ComponentModel.DataAnnotations;
 using TBAppBackend.DTO;
 using Microsoft.EntityFrameworkCore;
+using CloudinaryDotNet.Actions;
 
 namespace TBAppBackend.Services
 {
@@ -248,8 +249,8 @@ namespace TBAppBackend.Services
                     };
                 }
 
-                var GetUserRole = await _coreRepository.GetRoleById(GetUser.RoleId);
-                if (GetUserRole.Id == 0)
+                //var GetUserRole = await _coreRepository.GetRoleById(GetUser.RoleId);
+                if (string.IsNullOrEmpty(GetUser.Role))
                 {
                     await LogWrite("LoginServiceAsync", "User Role Not Found", "CoreService:LoginServiceAsync", model.UserId ?? "System");
 
@@ -312,7 +313,7 @@ namespace TBAppBackend.Services
                     {
                         UserId = GetUser.UserID,
                         FullName = GetUser.FullName,
-                        Role = GetUserRole.Role,
+                        Role = GetUser.Role,
                         MerchantId = GetMerchnat.Id,
                         BusinessName = GetMerchnat.Name,
                         BusinessAddress = GetMerchnat.Address,
@@ -322,7 +323,7 @@ namespace TBAppBackend.Services
                         BranchName = GetBranch.BranchName,
                         BranchId = GetUser.BranchId,
                     },
-                   Token = await _jwtFactory.LoginToken(GetUserRole.Role,GetUser.UserID, GetMerchnat.Id.ToString(), GetBranch.Id.ToString())
+                   Token = await _jwtFactory.LoginToken(GetUser.Role,GetUser.UserID, GetMerchnat.Id.ToString(), GetBranch.Id.ToString())
                 };
             }
             catch (Exception ex)
@@ -2042,7 +2043,7 @@ namespace TBAppBackend.Services
                     Email = addBranchUserDto.Email,
                     CreatedAt = DateTime.Now,
                     BranchId = addBranchUserDto.BranchId,
-                    RoleId = addBranchUserDto.RoleId
+                    Role = addBranchUserDto.IsAdmin ?"BranchAdmin" : "BranchUser"
                 };
 
                 return await _coreRepository.AddUserAsync(User);
@@ -2053,25 +2054,16 @@ namespace TBAppBackend.Services
                 return false;
             }
         }
-        public async Task<List<Branches>> GetBranchesListService(long MerchantId, string Role, int BranchId)
+        public async Task<List<BranchListDto>> GetBranchesListService(long MerchantId, string Role, int BranchId)
         {
             try
             {
-                if(Role == "BusinessAdmin")
-                {
-
-                    return await _coreRepository.GetBranchesList(MerchantId);
-                }
-                else
-                {
-                    return await _coreRepository.GetBranchesListById(BranchId);
-
-                }
+                return await _coreRepository.GetBranchesList(MerchantId, Role, BranchId );
 
             }
             catch (Exception ex)
             {
-                return new List<Branches>();
+                return new List<BranchListDto>();
             }
         }
 
@@ -2122,7 +2114,7 @@ namespace TBAppBackend.Services
                         {
                             Id = u.Id,
                             UserId = u.UserID,
-                            UserRole = "",
+                            UserRole = u.Role,
                             FullName = u.FullName,
                             MobileNumber = u.MobileNumber,
                             Email = u.Email,
@@ -2149,6 +2141,61 @@ namespace TBAppBackend.Services
             {
                 await LogWrite("Error", ex.Message, "GetLocationsWithUsersAsync", merchantId.ToString());
                 throw;
+            }
+        }
+
+        public async Task<DefaultResponse> EditBranchAsync(BranchDto dto, long merchantId)
+        {
+            try
+            {
+                Branches existing = await _coreRepository.GetBranchByIdMerchantIdAsync(dto.Id??0, merchantId);
+                if (existing == null)
+                {
+                    return new DefaultResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "Branch not found"
+                    };
+                }
+                Branches duplicate = await _coreRepository.GetBranchesByNameandMerchantId(dto.BranchName, merchantId);
+                if (duplicate != null && duplicate.Id != dto.Id)
+                {
+                    return new DefaultResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "Branch Name already exists"
+                    };
+                }
+                existing.BranchName = dto.BranchName;
+                existing.Address = dto.Address;
+                existing.CityID = dto.CityID;
+                existing.Active = dto.Active ?? existing.Active;
+
+                bool isUpdated = await _coreRepository.UpdateBranchAsync(existing);
+
+                if (isUpdated)
+                {
+                    return new DefaultResponse
+                    {
+                        ResponseCode = "00",
+                        ResponseMessage = "Branch updated successfully"
+                    };
+                }
+
+
+                return new DefaultResponse
+                {
+                    ResponseCode = "01",
+                    ResponseMessage = "Update failed"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new DefaultResponse
+                {
+                    ResponseCode = "01",
+                    ResponseMessage = "Error updating location"
+                };
             }
         }
     }

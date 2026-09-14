@@ -970,7 +970,7 @@ namespace TBAppBackend.Controllers
 
                 var tokenData = await _jwtFactory.ValidateJwtToken(token);
 
-                if (tokenData == null || tokenData.MerchantId <= 0)
+                if (tokenData == null || tokenData.MerchantId <= 0 || tokenData.Role != "BusinessAdmin")
                 {
                     return Ok(new DefaultResponse
                     {
@@ -1036,6 +1036,53 @@ namespace TBAppBackend.Controllers
             }
 
 
+        }
+
+        [HttpPost("EditBranch")]
+        [Authorize]
+        public async Task<IActionResult> EditBranch([FromBody] BranchDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage));
+            }
+
+            try
+            {
+                string token = HttpContext.Request.Headers["Authorization"]
+                             .ToString()
+                             .Replace("Bearer ", "");
+                var tokenData = await _jwtFactory.ValidateJwtToken(token);
+
+                if (tokenData == null || tokenData.MerchantId <= 0 || tokenData.Role != "BusinessAdmin")
+                {
+                    return Ok(new
+                    {
+                        responseCode = "04",
+                        responseMessage = "Unauthorized"
+                    });
+                }
+
+                long merchantId = tokenData.MerchantId;
+
+
+                var result = await _coreService.EditBranchAsync(dto, merchantId);
+
+                return Ok(result);
+            }
+            catch (WebException ex)
+            {
+                await _coreService.LogWrite("error ", ex.Message, "CoreController:EditBranch", "system");
+                var response = new DefaultResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "service fail",
+
+                };
+                return Ok(response);
+            }
         }
 
         //GetUserRoles
@@ -1116,7 +1163,11 @@ namespace TBAppBackend.Controllers
                         ResponseMessage = "user is unauthorized",
                     });
                 }
-
+                // If user is not BusinessAdmin, use BranchID from token
+                if (tokenData.Role != "BusinessAdmin")
+                {
+                    addBranchUserDto.BranchId = tokenData.BranchId;
+                }
                 addBranchUserDto.UserID = addBranchUserDto.UserID.Trim();
 
                     var checkUserExist = await _coreService.GetUserByUserIdService(addBranchUserDto.UserID);
@@ -1231,7 +1282,7 @@ namespace TBAppBackend.Controllers
         //-- Get Branch With Users
         [HttpGet("GetBranchWithUsers")]
         [Authorize]
-        public async Task<IActionResult> GetBranchWithUsers(int BranchId)
+        public async Task<IActionResult> GetBranchWithUsers()
         {
             if (!ModelState.IsValid)
             {
@@ -1246,7 +1297,7 @@ namespace TBAppBackend.Controllers
                                         .Replace("Bearer ", "");
                 var getTokenDetails = await _jwtFactory.ValidateJwtToken(token);
 
-                if (getTokenDetails == null)
+                if (getTokenDetails == null || getTokenDetails.MerchantId <= 0)
                 {
                     return Ok(new
                     {
@@ -1258,8 +1309,8 @@ namespace TBAppBackend.Controllers
 
                 long merchantId = getTokenDetails.MerchantId;
                 string role = getTokenDetails.Role;
-                int? userLocationId = role == "BusinessAdmin" ? null : BranchId;
-                var LocationUser = await _coreService.GetLocationsWithUsersAsync(merchantId, role, userLocationId);
+                int? userBranchId = role == "BusinessAdmin" ? null : getTokenDetails.BranchId;
+                var LocationUser = await _coreService.GetLocationsWithUsersAsync(merchantId, role, userBranchId);
 
 
                 var response = new

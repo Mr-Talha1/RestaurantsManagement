@@ -13,10 +13,10 @@ namespace TBAppBackend.Models
         public string? MobileNumber { get; set; }
         public string? Email { get; set; }
         public string PasswordHash { get; set; } = null!;
-        //public string Role { get; set; } = null!;  // Admin, Staff, Manager
+        public string Role { get; set; } = null!;  // Admin, Staff, Manager
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public int BranchId { get; set; }
-        public int RoleId { get; set; }
+        //public int RoleId { get; set; }
     }
 }
