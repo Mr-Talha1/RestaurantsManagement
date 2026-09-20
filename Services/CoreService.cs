@@ -272,7 +272,16 @@ namespace TBAppBackend.Services
                         ResponseMessage = "Branch Not Found"
                     };
                 }
+                if (GetBranch.Active == false)
+                {
+                    await LogWrite("LoginServiceAsync", "InActive Branch", "CoreService:LoginServiceAsync", model.UserId ?? "System");
 
+                    return new DefaultResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "InActive Branch"
+                    };
+                }
                 // Step-1: User exists, PIN not entered
                 if (string.IsNullOrEmpty(model.Password))
                 {
@@ -317,7 +326,7 @@ namespace TBAppBackend.Services
                         MerchantId = GetMerchnat.Id,
                         BusinessName = GetMerchnat.Name,
                         BusinessAddress = GetBranch.Address,
-                        BusinessMobileNumber = GetMerchnat.MobileNumber,
+                        BusinessMobileNumber = GetBranch.MobileNumber,
                         LogoPath = GetMerchnat.LogoPath,
                         BusinessType = GetMerchnat.BusinessType,
                         BranchName = GetBranch.BranchName,
@@ -1983,6 +1992,7 @@ namespace TBAppBackend.Services
                     Active = branchDto.Active,
                     CreationDate = DateTime.Now,
                     MerchantId = MerchantId,
+                    MobileNumber=branchDto.MobileNumber,
 
 
                 };
@@ -2131,6 +2141,7 @@ namespace TBAppBackend.Services
                         Address = location.Address,
                         Active = location.Active,
                         CityID = location.CityID,
+                        MobileNumber = location.MobileNumber,
                         CreationDate = location.CreationDate?.ToString("dd-MM-yyyy"),
                         Users = usersInLocation
                     });
@@ -2171,6 +2182,7 @@ namespace TBAppBackend.Services
                 existing.Address = dto.Address;
                 existing.CityID = dto.CityID;
                 existing.Active = dto.Active ?? existing.Active;
+                existing.MobileNumber = dto.MobileNumber;
 
                 bool isUpdated = await _coreRepository.UpdateBranchAsync(existing);
 

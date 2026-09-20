@@ -7,6 +7,7 @@
         public string Address { get; set; }
         public bool? Active { get; set; }
         public int? CityID { get; set; }
+        public string? MobileNumber { get; set; }
         public string? CreationDate { get; set; }
         public List<UserDto> Users { get; set; }
     }

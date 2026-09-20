@@ -13,6 +13,9 @@ namespace TBAppBackend.DTO
         [Required]
         public int? CityID { get; set; }
         [Required]
+        public string? MobileNumber { get; set; }
+
+        [Required]
         public bool? Active { get; set; }
 
     }

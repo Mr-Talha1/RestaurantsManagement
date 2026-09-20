@@ -12,6 +12,7 @@ namespace TBAppBackend.Models
         public int? CityID { get; set; }
         public bool? Active { get; set; }
         public long MerchantId { get; set; }
+        public string? MobileNumber { get; set; }
         public DateTime? CreationDate { get; set; }
 
     }
