@@ -316,7 +316,7 @@ namespace TBAppBackend.Services
                         Role = GetUser.Role,
                         MerchantId = GetMerchnat.Id,
                         BusinessName = GetMerchnat.Name,
-                        BusinessAddress = GetMerchnat.Address,
+                        BusinessAddress = GetBranch.Address,
                         BusinessMobileNumber = GetMerchnat.MobileNumber,
                         LogoPath = GetMerchnat.LogoPath,
                         BusinessType = GetMerchnat.BusinessType,
