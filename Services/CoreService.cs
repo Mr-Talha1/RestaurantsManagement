@@ -1501,7 +1501,7 @@ namespace TBAppBackend.Services
                 };
             }
         }
-        public async Task<ReportResponseDto> GetReportAsync(ReportRequestDto request, long merchantId)
+        public async Task<ReportResponseDto> GetReportAsync(ReportRequestDto request, long merchantId, string role ,int userBranchId)
         {
             try
             {
@@ -1526,16 +1526,33 @@ namespace TBAppBackend.Services
                     };
                 }
 
+                // Branch handling
+                int? branchId;
+
+                if (role == "BusinessAdmin")
+                {
+                    // BusinessAdmin:
+                    // null = all branches
+                    // value = selected branch
+                    branchId = request.BranchId;
+                }
+                else
+                {
+                    // Other roles:
+                    // Always use branch from token
+                    branchId = userBranchId;
+                }
+
                 // Get all report data
-                var kpi = await _coreRepository.GetKpiDataAsync(merchantId, fromDate, toDate);
-                var productStats = await _coreRepository.GetProductStatsAsync(merchantId, fromDate, toDate);
-                var timeData = await _coreRepository.GetTimeDataAsync(merchantId, fromDate, toDate);
+                var kpi = await _coreRepository.GetKpiDataAsync(merchantId, fromDate, toDate, branchId);
+                var productStats = await _coreRepository.GetProductStatsAsync(merchantId, fromDate, toDate, branchId);
+                var timeData = await _coreRepository.GetTimeDataAsync(merchantId, fromDate, toDate, branchId);
 
                 // NEW DATA
-                var taxSummary = await _coreRepository.GetTaxSummaryAsync(merchantId, fromDate, toDate);
-                var discountSummary = await _coreRepository.GetDiscountSummaryAsync(merchantId, fromDate, toDate);
-                var paymentMethodStats = await _coreRepository.GetPaymentMethodStatsAsync(merchantId, fromDate, toDate);
-                var orderStats = await _coreRepository.GetOrderStatsAsync(merchantId, fromDate, toDate);
+                var taxSummary = await _coreRepository.GetTaxSummaryAsync(merchantId, fromDate, toDate, branchId);
+                var discountSummary = await _coreRepository.GetDiscountSummaryAsync(merchantId, fromDate, toDate, branchId);
+                var paymentMethodStats = await _coreRepository.GetPaymentMethodStatsAsync(merchantId, fromDate, toDate, branchId);
+                var orderStats = await _coreRepository.GetOrderStatsAsync(merchantId, fromDate, toDate, branchId);
 
                 // Log the report generation
                 await _coreRepository.LogWriteAsync(

@@ -9,5 +9,7 @@ namespace TBAppBackend.DTO
 
         [Required]
         public string ToDate { get; set; }
+
+        public int? BranchId { get; set; }
     }
 }

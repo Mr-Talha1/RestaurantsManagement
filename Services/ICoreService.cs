@@ -30,7 +30,7 @@ namespace TBAppBackend.Services
         Task<object> GetOrderHistoryAsync(OrderHistoryRequest model, long merchantId, string role, int userBranchId);
         Task<object> SearchCustomersAsync(string query, long merchantId);
         Task<DefaultResponse> RefundOrderAsync(long OrderId, long merchantId, string userId);
-        Task<ReportResponseDto> GetReportAsync(ReportRequestDto request, long merchantId);
+        Task<ReportResponseDto> GetReportAsync(ReportRequestDto request, long merchantId, string role, int userBranchId);
         Task<EditOrderResponse> EditOrderAsync(EditOrderRequest request, long merchantId, string userId,int BranchId);
         Task<WebsiteConfigResponseDto?> GetWebsiteConfigBySubdomainAsync(string subdomain);
         Task<WebsiteConfigResponseDto?> GetWebsiteConfigByMerchantIdAsync(long merchantId);

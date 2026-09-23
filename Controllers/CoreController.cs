@@ -706,7 +706,7 @@ namespace TBAppBackend.Controllers
                 UserID = tokenData.UserID;
 
                 // Get report
-                var result = await _coreService.GetReportAsync(request, tokenData.MerchantId);
+                var result = await _coreService.GetReportAsync(request, tokenData.MerchantId,tokenData.Role,tokenData.BranchId);
                 return Ok(result);
             }
             catch (Exception ex)
