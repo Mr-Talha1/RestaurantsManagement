@@ -595,7 +595,7 @@ namespace TBAppBackend.Controllers
 
                 UserID = tokenData.UserID;
 
-                var response = await _coreService.GetOrderHistoryAsync(request, tokenData.MerchantId);
+                var response = await _coreService.GetOrderHistoryAsync(request, tokenData.MerchantId,tokenData.Role,tokenData.BranchId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -741,7 +741,7 @@ namespace TBAppBackend.Controllers
 
                 UserID = tokenData.UserID;
 
-                var response = await _coreService.EditOrderAsync(request, tokenData.MerchantId, UserID);
+                var response = await _coreService.EditOrderAsync(request, tokenData.MerchantId, UserID,tokenData.BranchId);
                 return Ok(response);
             }
             catch (Exception ex)

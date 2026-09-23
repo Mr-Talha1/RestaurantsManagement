@@ -1283,7 +1283,7 @@ namespace TBAppBackend.Services
             }
         }
 
-        public async Task<object> GetOrderHistoryAsync(OrderHistoryRequest model, long merchantId)
+        public async Task<object> GetOrderHistoryAsyncbk(OrderHistoryRequest model, long merchantId)
         {
             try
             {
@@ -1308,7 +1308,7 @@ namespace TBAppBackend.Services
                 var DateFrom = fromtime != null ? Convert.ToDateTime(FromDate + fromtime) : Convert.ToDateTime("1970-01-01 00:00:00.000");
                 var DateTo = totime != null ? Convert.ToDateTime(ToDate + totime) : now;
 
-                var list = await _coreRepository.GetOrderHistoryAsync(merchantId, DateFrom, DateTo);
+                var list = await _coreRepository.GetOrderHistoryAsync(merchantId, DateFrom, DateTo,0);
 
                 var TotalRevenue = list.Sum(x => x.TotalAmount);
 
@@ -1332,7 +1332,82 @@ namespace TBAppBackend.Services
                 };
             }
         }
+        public async Task<object> GetOrderHistoryAsync(OrderHistoryRequest model,long merchantId,string role,int userBranchId)
+        {
+            try
+            {
+                var FromDate = !string.IsNullOrEmpty(model.FromDate) ? model.FromDate : null;
+                var ToDate = !string.IsNullOrEmpty(model.ToDate) ? model.ToDate : null;
 
+                var fromtime = "";
+                var totime = "";
+
+                if ((FromDate == null && ToDate == null) || (FromDate == "" && ToDate == ""))
+                {
+                    fromtime = null;
+                    totime = null;
+                }
+                else
+                {
+                    fromtime = " 00:00:00.000";
+                    totime = " 23:59:59.999";
+                }
+
+                DateTime now = DateTime.Now;
+
+                var DateFrom = fromtime != null
+                    ? Convert.ToDateTime(FromDate + fromtime)
+                    : Convert.ToDateTime("1970-01-01 00:00:00.000");
+
+                var DateTo = totime != null
+                    ? Convert.ToDateTime(ToDate + totime)
+                    : now;
+
+                // Branch handling
+                int? branchId = null;
+
+                if (role == "BusinessAdmin")
+                {
+                    // BusinessAdmin:
+                    // BranchId null = all branches
+                    // BranchId provided = selected branch
+                    branchId = model.BranchId;
+                }
+                else
+                {
+                    // Other roles can only see their own branch
+                    branchId = userBranchId;
+                }
+
+                var list = await _coreRepository.GetOrderHistoryAsync(merchantId,DateFrom,DateTo,branchId);
+
+                var TotalRevenue = list.Sum(x => x.TotalAmount);
+
+                return new
+                {
+                    ResponseCode = "00",
+                    ResponseMessage = "Success",
+                    Data = list,
+                    OrderCount = list.Count,
+                    Revenue = TotalRevenue
+                };
+            }
+            catch (Exception ex)
+            {
+                await LogWrite(
+                    "Error-GetOrderHistoryAsync",
+                    ex.Message,
+                    "CoreService.cs",
+                    merchantId.ToString()
+                );
+
+                return new DefaultResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "Service Failed"
+                };
+            }
+        }
         public async Task<object> SearchCustomersAsync(string query, long merchantId)
         {
             try
@@ -1497,7 +1572,7 @@ namespace TBAppBackend.Services
             }
         }
 
-        public async Task<EditOrderResponse> EditOrderAsync(EditOrderRequest request, long merchantId, string userId)
+        public async Task<EditOrderResponse> EditOrderAsync(EditOrderRequest request, long merchantId, string userId,int BranchId)
         {
             try
             {
@@ -1733,7 +1808,7 @@ namespace TBAppBackend.Services
                 {
                     FromDate = DateTime.MinValue.ToString("yyyy-MM-dd"),
                     ToDate = DateTime.MaxValue.ToString("yyyy-MM-dd")
-                }, merchantId);
+                }, merchantId,"", BranchId);
 
                 OrderHistoryResponse? updatedOrder = null;
 

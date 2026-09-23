@@ -358,50 +358,6 @@ namespace TBAppBackend.Repositories
         }
         public async Task<List<OrderHistoryResponse>> GetOrderHistoryAsyncbk(long merchantId, DateTime fromDate, DateTime toDate)
         {
-            var query = _appDbContext.Orders
-                .Where(x => x.MerchantId == merchantId &&
-                            x.OrderDate >= fromDate &&
-                            x.OrderDate <= toDate);
-
-            var orders = await query
-                .OrderByDescending(x => x.Id)
-                .ToListAsync();
-
-            var result = new List<OrderHistoryResponse>();
-
-            foreach (var o in orders)
-            {
-                var items = await (from i in _appDbContext.OrderItems
-                                   join p in _appDbContext.Products on i.ProductId equals p.Id
-                                   where i.OrderId == o.Id
-                                   select new OrderItemResponse
-                                   {
-                                       ProductName = p.ProductName,
-                                       Qty = i.Qty,
-                                       UnitPrice = i.UnitPrice,
-                                       GrossTotal = i.GrossTotal,
-                                       TotalPrice = i.TotalPrice
-                                   }).ToListAsync();
-
-                result.Add(new OrderHistoryResponse
-                {
-                    Id = o.Id,
-                    OrderNumber = o.OrderNumber,
-                    OrderType = o.OrderType,
-                    OrderDate = o.OrderDate,
-                    TotalAmount = o.TotalAmount,
-                    GrossTotal=o.GrossTotal,
-                    ItemsCount = o.ItemsCount,
-                    TableName = o.TableId.ToString(),
-                    Items = items
-                });
-            }
-
-            return result;
-        }
-        public async Task<List<OrderHistoryResponse>> GetOrderHistoryAsync(
-    long merchantId, DateTime fromDate, DateTime toDate)
-        {
             var orders = await _appDbContext.Orders
                 .Where(x => x.MerchantId == merchantId &&
                             x.OrderDate >= fromDate &&
@@ -490,7 +446,99 @@ namespace TBAppBackend.Repositories
 
             return result;
         }
+        public async Task<List<OrderHistoryResponse>> GetOrderHistoryAsync(long merchantId,DateTime fromDate,DateTime toDate,int? branchId)
+        {
+            var orders = await _appDbContext.Orders
+                .Where(x => x.MerchantId == merchantId &&
+                            x.OrderDate >= fromDate &&
+                            x.OrderDate <= toDate &&
+                            (branchId == null || x.BranchId == branchId))
+                .OrderByDescending(x => x.Id)
+                .ToListAsync();
 
+            var result = new List<OrderHistoryResponse>();
+
+            foreach (var o in orders)
+            {
+                // ---------- Order Items ----------
+                var items = await (from i in _appDbContext.OrderItems
+                                   join p in _appDbContext.Products
+                                       on i.ProductId equals p.Id
+                                   where i.OrderId == o.Id
+                                   select new OrderItemResponse
+                                   {
+                                       ProductId = p.Id,
+                                       ProductName = p.ProductName,
+                                       Qty = i.Qty,
+                                       UnitPrice = i.UnitPrice,
+                                       GrossTotal = i.GrossTotal,
+                                       TotalPrice = i.TotalPrice,
+                                       DiscountType = i.DiscountType,
+                                       DiscountValue = i.DiscountValue
+                                   }).ToListAsync();
+
+                // ---------- Customer ----------
+                CustomerResponse customer = null;
+
+                if (o.CustomerId.HasValue && o.CustomerId > 0)
+                {
+                    customer = await _appDbContext.Customers
+                        .Where(c => c.CustomerId == o.CustomerId.Value)
+                        .Select(c => new CustomerResponse
+                        {
+                            CustomerId = c.CustomerId,
+                            CustomerName = c.CustomerName,
+                            CustomerPhone = c.CustomerPhone,
+                            DeliveryAddress = c.DeliveryAddress
+                        })
+                        .FirstOrDefaultAsync();
+                }
+
+                // ---------- Dining Table Name ----------
+                string tableName = null;
+
+                if (o.TableId.HasValue && o.TableId > 0)
+                {
+                    tableName = await _appDbContext.DiningTables
+                        .Where(t => t.Id == o.TableId.Value)
+                        .Select(t => t.Name)
+                        .FirstOrDefaultAsync();
+                }
+
+                // ---------- Final Response ----------
+                result.Add(new OrderHistoryResponse
+                {
+                    Id = o.Id,
+                    OrderNumber = o.OrderNumber,
+                    InvoiceId = o.InvoiceId,
+                    OrderType = o.OrderType,
+                    OrderDate = o.OrderDate,
+                    TotalAmount = o.TotalAmount,
+                    GrossTotal = o.GrossTotal,
+                    ItemsCount = o.ItemsCount,
+                    TableName = tableName,
+                    UserId = o.UserId,
+                    IsRefunded = o.IsRefunded,
+                    RefundedBy = o.RefundedBy,
+                    RefundedAt = o.RefundedAt,
+                    PaymentType = o.PaymentType,
+
+                    OrderDiscountType = o.OrderDiscountType,
+                    OrderDiscountValue = o.OrderDiscountValue,
+
+                    TaxType = o.TaxType,
+                    TaxValue = o.TaxValue,
+                    TaxAmount = o.TaxAmount,
+
+                    BranchId = o.BranchId,
+
+                    Customer = customer,
+                    Items = items
+                });
+            }
+
+            return result;
+        }
         public async Task<Customers> GetCustomersbyPhoneNumber(long merchantId, string CustomerPhone)
         {
             try
