@@ -1583,5 +1583,508 @@ namespace TBAppBackend.Repositories
                 return false;
             }
         }
+        
+        // Dashboard 
+        public async Task<DashboardSummaryDto> GetDashboardSummaryAsync(long merchantId,int? branchId, DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date.AddDays(1);
+
+                var orders = await _appDbContext.Orders
+                    .Where(o =>
+                        o.MerchantId == merchantId &&
+                        o.BranchId == branchId &&
+                        o.OrderDate >= startDate &&
+                        o.OrderDate < endDate &&
+                        !o.IsRefunded)
+                    .ToListAsync();
+
+                var revenue = orders.Sum(x => x.TotalAmount);
+
+                var orderCount = orders.Count;
+
+                var avgOrder = orderCount > 0
+                    ? revenue / orderCount
+                    : 0;
+
+                //var customerCount = _appDbContext.orders
+                //    .Where(x => x.CustomerId.HasValue)
+                //    .Select(x => x.CustomerId)
+                //    .Distinct()
+                //    .Count(); 
+                
+
+                var customerCount = await _appDbContext.Customers
+                   .CountAsync(x =>
+                       x.MerchantId == merchantId);
+
+                var totalStaff = await _appDbContext.SystemUsers
+                    .CountAsync(x =>
+                        x.MerchantId == merchantId &&
+                        x.BranchId == branchId);
+
+                var activeStaff = await _appDbContext.SystemUsers
+                    .CountAsync(x =>
+                        x.MerchantId == merchantId &&
+                        x.BranchId == branchId &&
+                        x.IsActive);
+
+                return new DashboardSummaryDto
+                {
+                    Revenue = revenue,
+                    Orders = orderCount,
+                    AvgOrder = avgOrder,
+                    Customers = customerCount,
+                    ActiveStaff = activeStaff,
+                    TotalStaff = totalStaff
+                };
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync(
+                    "Error-GetDashboardSummary",
+                    ex.Message,
+                    "CoreRepository:GetDashboardSummaryAsync",
+                    merchantId.ToString());
+
+                return new DashboardSummaryDto();
+            }
+        }
+        public async Task<List<RevenueTrendDto>> GetRevenueTrendAsync(long merchantId,int branchId,DateTime fromDate,DateTime toDate)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date.AddDays(1);
+
+                var orders = await _appDbContext.Orders
+                    .Where(o =>
+                        o.MerchantId == merchantId &&
+                        o.BranchId == branchId &&
+                        o.OrderDate >= startDate &&
+                        o.OrderDate < endDate &&
+                        !o.IsRefunded)
+                    .Select(o => new
+                    {
+                        o.OrderDate,
+                        o.TotalAmount
+                    })
+                    .ToListAsync();
+
+                return orders
+                    .GroupBy(x => x.OrderDate.Value.Date)
+                    .Select(g => new RevenueTrendDto
+                    {
+                        Date = g.Key,
+                        Revenue = g.Sum(x => x.TotalAmount)
+                    })
+                    .OrderBy(x => x.Date)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync(
+                    "Error-GetRevenueTrend",
+                    ex.Message,
+                    "CoreRepository:GetRevenueTrendAsync",
+                    merchantId.ToString());
+
+                return new List<RevenueTrendDto>();
+            }
+        }
+
+        public async Task<List<PaymentMethodDashboardDto>> GetDashboardPaymentMethodsAsync(long merchantId,int branchId,DateTime fromDate,DateTime toDate)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date.AddDays(1);
+
+                var orders = await _appDbContext.Orders
+                    .Where(o =>
+                        o.MerchantId == merchantId &&
+                        o.BranchId == branchId &&
+                        o.OrderDate >= startDate &&
+                        o.OrderDate < endDate &&
+                        !o.IsRefunded)
+                    .Select(o => new
+                    {
+                        o.PaymentType,
+                        o.TotalAmount
+                    })
+                    .ToListAsync();
+
+                var totalAmount = orders.Sum(x => x.TotalAmount);
+
+                return orders
+                    .GroupBy(x => x.PaymentType)
+                    .Select(g => new PaymentMethodDashboardDto
+                    {
+                        PaymentMethod = g.Key,
+                        Amount = g.Sum(x => x.TotalAmount),
+                        Percentage = totalAmount > 0
+                            ? (g.Sum(x => x.TotalAmount) / totalAmount) * 100
+                            : 0
+                    })
+                    .OrderByDescending(x => x.Amount)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync(
+                    "Error-GetDashboardPaymentMethods",
+                    ex.Message,
+                    "CoreRepository:GetDashboardPaymentMethodsAsync",
+                    merchantId.ToString());
+
+                return new List<PaymentMethodDashboardDto>();
+            }
+        }
+
+        //public async Task<List<HourlyOrderDto>> GetHourlyOrdersAsync(long merchantId,int branchId,DateTime fromDate, DateTime toDate)
+        //{
+        //    try
+        //    {
+        //        var startDate = fromDate.Date;
+        //        var endDate = toDate.Date.AddDays(1);
+
+        //        var orders = await _appDbContext.Orders
+        //            .Where(o =>
+        //                o.MerchantId == merchantId &&
+        //                o.BranchId == branchId &&
+        //                o.OrderDate >= startDate &&
+        //                o.OrderDate < endDate &&
+        //                !o.IsRefunded)
+        //            .Select(o => new
+        //            {
+        //                o.OrderDate,
+        //                o.TotalAmount
+        //            })
+        //            .ToListAsync();
+
+        //        var result = new List<HourlyOrderDto>();
+
+        //        for (int hour = 0; hour < 24; hour++)
+        //        {
+        //            var hourlyOrders = orders
+        //                .Where(x => x.OrderDate.Hour == hour)
+        //                .ToList();
+
+        //            result.Add(new HourlyOrderDto
+        //            {
+        //                Hour = hour,
+        //                Label = $"{hour}:00",
+        //                Revenue = hourlyOrders.Sum(x => x.TotalAmount),
+        //                OrderCount = hourlyOrders.Count
+        //            });
+        //        }
+
+        //        return result;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await LogWriteAsync(
+        //            "Error-GetHourlyOrders",
+        //            ex.Message,
+        //            "CoreRepository:GetHourlyOrdersAsync",
+        //            merchantId.ToString());
+
+        //        return new List<HourlyOrderDto>();
+        //    }
+        //}
+
+        public async Task<BranchPerformanceDto> GetBranchPerformanceAsync(long merchantId,int branchId,DateTime fromDate,DateTime toDate)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date.AddDays(1);
+
+                var branch = await _appDbContext.Branches
+                    .Where(x =>
+                        x.Id == branchId &&
+                        x.MerchantId == merchantId)
+                    .Select(x => new
+                    {
+                        x.Id,
+                        x.BranchName
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (branch == null)
+                {
+                    return new BranchPerformanceDto();
+                }
+
+                var orders = await _appDbContext.Orders
+                    .Where(o =>
+                        o.MerchantId == merchantId &&
+                        o.BranchId == branchId &&
+                        o.OrderDate >= startDate &&
+                        o.OrderDate < endDate &&
+                        !o.IsRefunded)
+                    .ToListAsync();
+
+                return new BranchPerformanceDto
+                {
+                    BranchName = branch.BranchName,
+                    Revenue = orders.Sum(x => x.TotalAmount),
+                    Orders = orders.Count
+                };
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync(
+                    "Error-GetBranchPerformance",
+                    ex.Message,
+                    "CoreRepository:GetBranchPerformanceAsync",
+                    merchantId.ToString());
+
+                return new BranchPerformanceDto();
+            }
+        }
+        public async Task<List<RecentOrderDto>> GetRecentOrdersAsync(long merchantId, int branchId,DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date.AddDays(1);
+
+                return await _appDbContext.Orders
+                    .Where(o =>
+                        o.MerchantId == merchantId &&
+                        o.BranchId == branchId &&
+                        o.OrderDate >= startDate &&
+                        o.OrderDate < endDate)
+                    .OrderByDescending(o => o.Id)
+                    .Take(10)
+                    .Select(o => new RecentOrderDto
+                    {
+                        Id = o.Id,
+                        OrderNumber = o.OrderNumber,
+                        OrderType = o.OrderType,
+                        OrderDate = o.OrderDate,
+                        TotalAmount = o.TotalAmount,
+                        PaymentType = o.PaymentType
+                    })
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync(
+                    "Error-GetRecentOrders",
+                    ex.Message,
+                    "CoreRepository:GetRecentOrdersAsync",
+                    merchantId.ToString());
+
+                return new List<RecentOrderDto>();
+            }
+        }
+        //public async Task<List<TopProductDto>> GetTopProductsAsync(long merchantId,int branchId,DateTime fromDate, DateTime toDate)
+        //{
+        //    try
+        //    {
+        //        var startDate = fromDate.Date;
+        //        var endDate = toDate.Date.AddDays(1);
+
+        //        var result = await (
+        //            from o in _appDbContext.Orders
+        //            join oi in _appDbContext.OrderItems
+        //                on o.Id equals oi.OrderId
+        //            join p in _appDbContext.Products
+        //                on oi.ProductId equals p.Id
+        //            where o.MerchantId == merchantId &&
+        //                  o.BranchId == branchId &&
+        //                  o.OrderDate >= startDate &&
+        //                  o.OrderDate < endDate &&
+        //                  !o.IsRefunded &&
+        //                  !p.IsDeleted
+        //            group oi by new
+        //            {
+        //                p.Id,
+        //                p.ProductName
+        //            }
+        //            into g
+        //            select new TopProductDto
+        //            {
+        //                ProductId = g.Key.Id,
+        //                ProductName = g.Key.ProductName,
+        //                Orders = g.Count(),
+        //                Revenue = g.Sum(x => x.TotalPrice)
+        //            })
+        //            .OrderByDescending(x => x.Revenue)
+        //            .Take(5)
+        //            .ToListAsync();
+
+        //        return result;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await LogWriteAsync(
+        //            "Error-GetTopProducts",
+        //            ex.Message,
+        //            "CoreRepository:GetTopProductsAsync",
+        //            merchantId.ToString());
+
+        //        return new List<TopProductDto>();
+        //    }
+        //}
+        public async Task<DashboardTimeDataDto> GetDashboardTimeDataAsync(long merchantId,int branchId, DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date.AddDays(1);
+
+                var orders = await _appDbContext.Orders
+                    .Where(o =>
+                        o.MerchantId == merchantId &&
+                        o.BranchId == branchId &&
+                        o.OrderDate.HasValue &&
+                        o.OrderDate >= startDate &&
+                        o.OrderDate < endDate &&
+                        !o.IsRefunded)
+                    .Select(o => new
+                    {
+                        OrderDate = o.OrderDate.Value,
+                        o.TotalAmount
+                    })
+                    .ToListAsync();
+
+                // ==============================
+                // SAME DAY -> HOURLY
+                // ==============================
+                if (fromDate.Date == toDate.Date)
+                {
+                    var result = new List<DashboardTimeItemDto>();
+
+                    for (int hour = 0; hour < 24; hour++)
+                    {
+                        var hourlyOrders = orders
+                            .Where(x => x.OrderDate.Hour == hour)
+                            .ToList();
+
+                        result.Add(new DashboardTimeItemDto
+                        {
+                            Label = DateTime.Today
+                                .AddHours(hour)
+                                .ToString("htt"),
+
+                            Revenue = hourlyOrders.Sum(x => x.TotalAmount),
+
+                            OrderCount = hourlyOrders.Count
+                        });
+                    }
+
+                    return new DashboardTimeDataDto
+                    {
+                        Type = "Hourly",
+                        Data = result
+                    };
+                }
+
+                // ==============================
+                // MULTIPLE DAYS -> DAILY
+                // ==============================
+
+                var dailyResult = new List<DashboardTimeItemDto>();
+
+                for (var date = startDate; date < endDate; date = date.AddDays(1))
+                {
+                    var dailyOrders = orders
+                        .Where(x => x.OrderDate.Date == date.Date)
+                        .ToList();
+
+                    dailyResult.Add(new DashboardTimeItemDto
+                    {
+                        Label = date.ToString("dd MMM"),
+
+                        Revenue = dailyOrders.Sum(x => x.TotalAmount),
+
+                        OrderCount = dailyOrders.Count
+                    });
+                }
+
+                return new DashboardTimeDataDto
+                {
+                    Type = "Daily",
+                    Data = dailyResult
+                };
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync(
+                    "Error-GetDashboardTimeData",
+                    ex.Message,
+                    "CoreRepository:GetDashboardTimeDataAsync",
+                    merchantId.ToString());
+
+                return new DashboardTimeDataDto
+                {
+                    Type = "Daily",
+                    Data = new List<DashboardTimeItemDto>()
+                };
+            }
+        }
+
+        public async Task<List<TopProductDto>> GetTopProductsAsync(long merchantId, int branchId, DateTime fromDate, DateTime toDate)
+        {
+            try
+            {
+                var startDate = fromDate.Date;
+                var endDate = toDate.Date.AddDays(1).AddTicks(-1);
+
+                // First, get all order items with their products
+                var query = from o in _appDbContext.Orders
+                            join oi in _appDbContext.OrderItems on o.Id equals oi.OrderId
+                            join p in _appDbContext.Products on oi.ProductId equals p.Id
+                            where o.MerchantId == merchantId &&
+                                  o.OrderDate >= startDate &&
+                                  o.OrderDate <= endDate &&
+                                  !o.IsRefunded &&
+                                  !p.IsDeleted &&
+                                  (branchId == null || o.BranchId == branchId)
+                            select new { o, oi, p };
+
+                var results = await query.ToListAsync();
+
+                // Group by product manually to calculate stats
+                var productGroups = results
+                    .GroupBy(x => new { x.p.Id, x.p.ProductName, x.p.ProductPrice })
+                    .Select(g => new TopProductDto
+                    {
+                        ProductId = g.Key.Id,
+                        ProductName = g.Key.ProductName,
+                        Quantity = g.Sum(x => x.oi.Qty),
+                        Revenue = g.Sum(x => x.oi.TotalPrice),
+                        OriginalRevenue = g.Sum(x => x.oi.GrossTotal ?? 0),
+                        //AveragePrice = g.Key.ProductPrice,
+
+                        //// Calculate discount amount properly
+                        //DiscountAmount = g.Sum(x =>
+                        //    (x.oi.DiscountAmount ?? 0) + // Item-level discounts
+                        //    (GetProportionalOrderDiscount(x.o, x.oi) ?? 0) // Order-level discounts
+                        //),
+
+                        //// Count items that had any discount
+                        //ItemsDiscounted = g.Count(x =>
+                        //    x.oi.DiscountAmount > 0 ||
+                        //    (x.o.TotalDiscount > 0 && x.oi.GrossTotal > 0)
+                        //)
+                    })
+                    .OrderByDescending(x => x.Quantity)
+                    .Take(5)
+                    .ToList();
+
+                return productGroups;
+            }
+            catch (Exception ex)
+            {
+                await LogWriteAsync("Error-GetTopProductsAsync", ex.Message, "CoreRepository:GetTopProductsAsync", merchantId.ToString());
+                return new List<TopProductDto>();
+            }
+        }
     }
 }

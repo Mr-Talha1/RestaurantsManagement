@@ -1333,6 +1333,48 @@ namespace TBAppBackend.Controllers
                 });
             }
         }
+
+        [HttpPost("GetDashboard")]
+        [Authorize]
+        public async Task<IActionResult> GetDashboard(DashboardRequestDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(
+                    ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage));
+            }
+
+            try
+            {
+                var token = HttpContext.Request.Headers["Authorization"];
+                token = token.ToString().Replace("Bearer ", "");
+
+                var tokenData = await _jwtFactory.ValidateJwtToken(token);
+
+                if (tokenData == null || tokenData.MerchantId <= 0)
+                {
+                    return Ok(new DefaultResponse
+                    {
+                        ResponseCode = "04",
+                        ResponseMessage = "user is unauthorized"
+                    });
+                }
+
+                var result = await _coreService.GetDashboardAsync(request,tokenData.MerchantId,tokenData.BranchId);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return Ok(new DefaultResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "Service Fail"
+                });
+            }
+        }
     }
 
 }

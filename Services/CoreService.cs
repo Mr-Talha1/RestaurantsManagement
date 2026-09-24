@@ -2303,6 +2303,97 @@ namespace TBAppBackend.Services
                 };
             }
         }
+
+        public async Task<object> GetDashboardAsync(DashboardRequestDto request,long merchantId, string role, int userBranchId)
+        {
+            try
+            {
+                if (!DateTime.TryParse(request.FromDate, out var fromDate) ||
+                    !DateTime.TryParse(request.ToDate, out var toDate))
+                {
+                    return new DefaultResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "Invalid date format. Use yyyy-MM-dd"
+                    };
+                }
+
+                if (fromDate > toDate)
+                {
+                    return new DefaultResponse
+                    {
+                        ResponseCode = "01",
+                        ResponseMessage = "From date cannot be after to date"
+                    };
+                }
+
+                // Branch handling
+                int? branchId;
+
+                if (role == "BusinessAdmin")
+                {
+                    // BusinessAdmin:
+                    // null = all branches
+                    // value = selected branch
+                    branchId = request.BranchId;
+                }
+                else
+                {
+                    // Other roles:
+                    // Always use branch from token
+                    branchId = userBranchId;
+                }
+
+                var summary = await _coreRepository.GetDashboardSummaryAsync(merchantId, branchId, fromDate, toDate);
+
+                var revenueTrend = await _coreRepository.GetRevenueTrendAsync( merchantId, branchId, fromDate, toDate);
+
+                //var categoryRevenue = await _coreRepository.GetCategoryRevenueAsync(merchantId,userBranchId,fromDate, toDate);
+
+                var paymentMethods = await _coreRepository.GetDashboardPaymentMethodsAsync( merchantId, branchId, fromDate, toDate);
+
+                //var hourlyOrders = await _coreRepository.GetHourlyOrdersAsync( merchantId,userBranchId, fromDate,toDate);
+                var timeData = await _coreRepository.GetDashboardTimeDataAsync( merchantId, branchId, fromDate,toDate);
+
+                var branchPerformance = await _coreRepository.GetBranchPerformanceAsync(merchantId, branchId, fromDate, toDate);
+
+                var recentOrders = await _coreRepository.GetRecentOrdersAsync(merchantId, branchId, fromDate,toDate);
+
+                var topProducts = await _coreRepository.GetTopProductsAsync( merchantId, branchId, fromDate, toDate);
+
+                return new
+                {
+                    ResponseCode = "00",
+                    ResponseMessage = "Dashboard data retrieved successfully",
+
+                    Data = new DashboardResponseDto
+                    {
+                        Summary = summary,
+                        RevenueTrend = revenueTrend,
+                        //CategoryRevenue = categoryRevenue,
+                        PaymentMethods = paymentMethods,
+                        TimeData = timeData,
+                        BranchPerformance = branchPerformance,
+                        RecentOrders = recentOrders,
+                        TopProducts = topProducts
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                await LogWrite(
+                    "Error-GetDashboard",
+                    ex.Message,
+                    "CoreService.GetDashboardAsync",
+                    merchantId.ToString());
+
+                return new DefaultResponse
+                {
+                    ResponseCode = "05",
+                    ResponseMessage = "Something went wrong while getting dashboard"
+                };
+            }
+        }
     }
 }
 
