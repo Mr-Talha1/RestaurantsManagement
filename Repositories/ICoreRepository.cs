@@ -68,12 +68,12 @@ namespace TBAppBackend.Repositories
         Task<bool> UpdateBranchAsync(Branches branches);
         // dashboard
         Task<DashboardSummaryDto> GetDashboardSummaryAsync(long merchantId, int? branchId, DateTime fromDate, DateTime toDate);
-        Task<List<RevenueTrendDto>> GetRevenueTrendAsync(long merchantId, int branchId, DateTime fromDate, DateTime toDate);
-        Task<List<PaymentMethodDashboardDto>> GetDashboardPaymentMethodsAsync(long merchantId, int branchId, DateTime fromDate, DateTime toDate);
+        Task<List<RevenueTrendDto>> GetRevenueTrendAsync(long merchantId, int? branchId, DateTime fromDate, DateTime toDate);
+        Task<List<PaymentMethodDashboardDto>> GetDashboardPaymentMethodsAsync(long merchantId, int? branchId, DateTime fromDate, DateTime toDate);
         //Task<List<HourlyOrderDto>> GetHourlyOrdersAsync(long merchantId, int branchId, DateTime fromDate, DateTime toDate);
-        Task<BranchPerformanceDto> GetBranchPerformanceAsync(long merchantId, int branchId, DateTime fromDate, DateTime toDate);
-        Task<List<TopProductDto>> GetTopProductsAsync(long merchantId, int branchId, DateTime fromDate, DateTime toDate);
-        Task<List<RecentOrderDto>> GetRecentOrdersAsync(long merchantId, int branchId, DateTime fromDate, DateTime toDate);
-        Task<DashboardTimeDataDto> GetDashboardTimeDataAsync(long merchantId, int branchId, DateTime fromDate, DateTime toDate);
+        Task<BranchPerformanceDto> GetBranchPerformanceAsync(long merchantId, int? branchId, DateTime fromDate, DateTime toDate);
+        Task<List<TopProductDto>> GetTopProductsAsync(long merchantId, int? branchId, DateTime fromDate, DateTime toDate);
+        Task<List<RecentOrderDto>> GetRecentOrdersAsync(long merchantId, int? branchId, DateTime fromDate, DateTime toDate);
+        Task<DashboardTimeDataDto> GetDashboardOrdersDataGraphAsync(long merchantId, int? branchId, DateTime fromDate, DateTime toDate);
     }
 }

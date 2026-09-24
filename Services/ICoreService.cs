@@ -45,7 +45,7 @@ namespace TBAppBackend.Services
         Task<List<BranchListDto>> GetBranchesListService(long MerchantId, string Role, int BranchId);
         Task<List<BranchUsersDto>> GetLocationsWithUsersAsync(long merchantId, string role, int? userLocationId);
         Task<DefaultResponse> EditBranchAsync(BranchDto dto, long merchantId);
-        Task<object> GetDashboardAsync(DashboardRequestDto request, long merchantId, int userBranchId);
+        Task<object> GetDashboardAsync(DashboardRequestDto request, long merchantId, string role, int userBranchId);
     }
 }
 

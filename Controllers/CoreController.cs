@@ -1362,7 +1362,7 @@ namespace TBAppBackend.Controllers
                     });
                 }
 
-                var result = await _coreService.GetDashboardAsync(request,tokenData.MerchantId,tokenData.BranchId);
+                var result = await _coreService.GetDashboardAsync(request,tokenData.MerchantId, tokenData.Role, tokenData.BranchId);
 
                 return Ok(result);
             }

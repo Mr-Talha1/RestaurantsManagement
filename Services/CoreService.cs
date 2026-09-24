@@ -1527,7 +1527,7 @@ namespace TBAppBackend.Services
                 }
 
                 // Branch handling
-                int? branchId;
+                int? branchId = null;
 
                 if (role == "BusinessAdmin")
                 {
@@ -2328,7 +2328,7 @@ namespace TBAppBackend.Services
                 }
 
                 // Branch handling
-                int? branchId;
+                int? branchId = null;
 
                 if (role == "BusinessAdmin")
                 {
@@ -2353,7 +2353,7 @@ namespace TBAppBackend.Services
                 var paymentMethods = await _coreRepository.GetDashboardPaymentMethodsAsync( merchantId, branchId, fromDate, toDate);
 
                 //var hourlyOrders = await _coreRepository.GetHourlyOrdersAsync( merchantId,userBranchId, fromDate,toDate);
-                var timeData = await _coreRepository.GetDashboardTimeDataAsync( merchantId, branchId, fromDate,toDate);
+                var OrdersDataGraph = await _coreRepository.GetDashboardOrdersDataGraphAsync( merchantId, branchId, fromDate,toDate);
 
                 var branchPerformance = await _coreRepository.GetBranchPerformanceAsync(merchantId, branchId, fromDate, toDate);
 
@@ -2370,9 +2370,8 @@ namespace TBAppBackend.Services
                     {
                         Summary = summary,
                         RevenueTrend = revenueTrend,
-                        //CategoryRevenue = categoryRevenue,
                         PaymentMethods = paymentMethods,
-                        TimeData = timeData,
+                        OrdersDataGraph = OrdersDataGraph,
                         BranchPerformance = branchPerformance,
                         RecentOrders = recentOrders,
                         TopProducts = topProducts

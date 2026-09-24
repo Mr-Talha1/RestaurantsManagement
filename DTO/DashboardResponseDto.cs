@@ -6,7 +6,7 @@
         public List<RevenueTrendDto> RevenueTrend { get; set; }
         //public List<CategoryRevenueDto> CategoryRevenue { get; set; }
         public List<PaymentMethodDashboardDto> PaymentMethods { get; set; }
-        public DashboardTimeDataDto TimeData { get; set; }
+        public DashboardTimeDataDto OrdersDataGraph { get; set; }
         //public List<HourlyOrderDto> HourlyOrders { get; set; }
         public BranchPerformanceDto BranchPerformance { get; set; }
         public List<RecentOrderDto> RecentOrders { get; set; }

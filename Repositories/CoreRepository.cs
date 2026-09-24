@@ -1595,10 +1595,10 @@ namespace TBAppBackend.Repositories
                 var orders = await _appDbContext.Orders
                     .Where(o =>
                         o.MerchantId == merchantId &&
-                        o.BranchId == branchId &&
                         o.OrderDate >= startDate &&
                         o.OrderDate < endDate &&
-                        !o.IsRefunded)
+                        !o.IsRefunded &&
+                        (branchId == null || o.BranchId == branchId))
                     .ToListAsync();
 
                 var revenue = orders.Sum(x => x.TotalAmount);
@@ -1608,14 +1608,7 @@ namespace TBAppBackend.Repositories
                 var avgOrder = orderCount > 0
                     ? revenue / orderCount
                     : 0;
-
-                //var customerCount = _appDbContext.orders
-                //    .Where(x => x.CustomerId.HasValue)
-                //    .Select(x => x.CustomerId)
-                //    .Distinct()
-                //    .Count(); 
                 
-
                 var customerCount = await _appDbContext.Customers
                    .CountAsync(x =>
                        x.MerchantId == merchantId);
@@ -1623,13 +1616,13 @@ namespace TBAppBackend.Repositories
                 var totalStaff = await _appDbContext.SystemUsers
                     .CountAsync(x =>
                         x.MerchantId == merchantId &&
-                        x.BranchId == branchId);
+                        (branchId == null || x.BranchId == branchId));
 
                 var activeStaff = await _appDbContext.SystemUsers
                     .CountAsync(x =>
                         x.MerchantId == merchantId &&
-                        x.BranchId == branchId &&
-                        x.IsActive);
+                        x.IsActive &&
+                        (branchId == null || x.BranchId == branchId));
 
                 return new DashboardSummaryDto
                 {
@@ -1652,7 +1645,7 @@ namespace TBAppBackend.Repositories
                 return new DashboardSummaryDto();
             }
         }
-        public async Task<List<RevenueTrendDto>> GetRevenueTrendAsync(long merchantId,int branchId,DateTime fromDate,DateTime toDate)
+        public async Task<List<RevenueTrendDto>> GetRevenueTrendAsync(long merchantId,int? branchId,DateTime fromDate,DateTime toDate)
         {
             try
             {
@@ -1662,10 +1655,10 @@ namespace TBAppBackend.Repositories
                 var orders = await _appDbContext.Orders
                     .Where(o =>
                         o.MerchantId == merchantId &&
-                        o.BranchId == branchId &&
                         o.OrderDate >= startDate &&
                         o.OrderDate < endDate &&
-                        !o.IsRefunded)
+                        !o.IsRefunded &&
+                        (branchId == null || o.BranchId == branchId))
                     .Select(o => new
                     {
                         o.OrderDate,
@@ -1695,7 +1688,7 @@ namespace TBAppBackend.Repositories
             }
         }
 
-        public async Task<List<PaymentMethodDashboardDto>> GetDashboardPaymentMethodsAsync(long merchantId,int branchId,DateTime fromDate,DateTime toDate)
+        public async Task<List<PaymentMethodDashboardDto>> GetDashboardPaymentMethodsAsync(long merchantId,int? branchId,DateTime fromDate,DateTime toDate)
         {
             try
             {
@@ -1705,10 +1698,10 @@ namespace TBAppBackend.Repositories
                 var orders = await _appDbContext.Orders
                     .Where(o =>
                         o.MerchantId == merchantId &&
-                        o.BranchId == branchId &&
                         o.OrderDate >= startDate &&
                         o.OrderDate < endDate &&
-                        !o.IsRefunded)
+                        !o.IsRefunded &&
+                        (branchId == null || o.BranchId == branchId))
                     .Select(o => new
                     {
                         o.PaymentType,
@@ -1795,7 +1788,7 @@ namespace TBAppBackend.Repositories
         //    }
         //}
 
-        public async Task<BranchPerformanceDto> GetBranchPerformanceAsync(long merchantId,int branchId,DateTime fromDate,DateTime toDate)
+        public async Task<BranchPerformanceDto> GetBranchPerformanceAsync(long merchantId,int? branchId,DateTime fromDate,DateTime toDate)
         {
             try
             {
@@ -1804,7 +1797,7 @@ namespace TBAppBackend.Repositories
 
                 var branch = await _appDbContext.Branches
                     .Where(x =>
-                        x.Id == branchId &&
+                        (branchId == null || x.Id == branchId) &&
                         x.MerchantId == merchantId)
                     .Select(x => new
                     {
@@ -1821,7 +1814,7 @@ namespace TBAppBackend.Repositories
                 var orders = await _appDbContext.Orders
                     .Where(o =>
                         o.MerchantId == merchantId &&
-                        o.BranchId == branchId &&
+                        (branchId == null || o.BranchId == branchId) &&
                         o.OrderDate >= startDate &&
                         o.OrderDate < endDate &&
                         !o.IsRefunded)
@@ -1845,7 +1838,7 @@ namespace TBAppBackend.Repositories
                 return new BranchPerformanceDto();
             }
         }
-        public async Task<List<RecentOrderDto>> GetRecentOrdersAsync(long merchantId, int branchId,DateTime fromDate, DateTime toDate)
+        public async Task<List<RecentOrderDto>> GetRecentOrdersAsync(long merchantId, int? branchId,DateTime fromDate, DateTime toDate)
         {
             try
             {
@@ -1855,7 +1848,7 @@ namespace TBAppBackend.Repositories
                 return await _appDbContext.Orders
                     .Where(o =>
                         o.MerchantId == merchantId &&
-                        o.BranchId == branchId &&
+                        (branchId == null || o.BranchId == branchId) &&
                         o.OrderDate >= startDate &&
                         o.OrderDate < endDate)
                     .OrderByDescending(o => o.Id)
@@ -1931,7 +1924,7 @@ namespace TBAppBackend.Repositories
         //        return new List<TopProductDto>();
         //    }
         //}
-        public async Task<DashboardTimeDataDto> GetDashboardTimeDataAsync(long merchantId,int branchId, DateTime fromDate, DateTime toDate)
+        public async Task<DashboardTimeDataDto> GetDashboardOrdersDataGraphAsync(long merchantId,int? branchId, DateTime fromDate, DateTime toDate)
         {
             try
             {
@@ -1941,11 +1934,11 @@ namespace TBAppBackend.Repositories
                 var orders = await _appDbContext.Orders
                     .Where(o =>
                         o.MerchantId == merchantId &&
-                        o.BranchId == branchId &&
                         o.OrderDate.HasValue &&
                         o.OrderDate >= startDate &&
                         o.OrderDate < endDate &&
-                        !o.IsRefunded)
+                        !o.IsRefunded &&
+                        (branchId == null || o.BranchId == branchId))
                     .Select(o => new
                     {
                         OrderDate = o.OrderDate.Value,
@@ -2029,7 +2022,7 @@ namespace TBAppBackend.Repositories
             }
         }
 
-        public async Task<List<TopProductDto>> GetTopProductsAsync(long merchantId, int branchId, DateTime fromDate, DateTime toDate)
+        public async Task<List<TopProductDto>> GetTopProductsAsync(long merchantId, int? branchId, DateTime fromDate, DateTime toDate)
         {
             try
             {
